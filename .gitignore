@@ -2,3 +2,5 @@
 *.json
 /false
 __pycache__
+*.png
+*.ipynb

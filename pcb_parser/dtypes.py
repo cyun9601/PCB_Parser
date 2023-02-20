@@ -14,6 +14,20 @@ class Line(D_type):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
+    def get_line(self):
+        return (self.startX, self.endX), (self.startY, self.endY)
+
+    def move(self, shift, inplace = False):
+        assert len(shift) == 2, "shift must be 2-dimension"
+        if inplace == False:
+            return (self.startX + shift[0], self.endX + shift[0]), (self.startY + shift[1], self.endY + shift[1])
+        else: 
+            self.startX += shift[0]
+            self.endX += shift[0]
+            self.startY += shift[1]
+            self.endY += shift[1]
+            return self.get_line()
+            
 class Arc(D_type):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -24,6 +38,9 @@ class Arc(D_type):
         self.centerX = float(kwargs['CenterX'])
         self.centerY = float(kwargs['CenterY'])
 
+    def get_center(self):
+        return (self.centerX, self.centerY)
+    
 class Shape:
     def __init__(self, shape_info:dict) -> None:
         ## raw dict
@@ -79,10 +96,10 @@ class Component:
         self.part_name = component_info['PartName']
         self.ecad_part_name = component_info['ECADPartName']
         self.package_name = component_info['PackageName']
-        self.component_shape = Shape(component_info['CompArea_Top'])
-        self.component_area_bottom = Shape(component_info['CompArea_Bottom'])
-        self.component_prohibit_area_top = Shape(component_info['CompProhibitArea_Top'])
-        self.component_prohibit_area_bottom = Shape(component_info['CompProhibitArea_Bottom'])
+        self.component_top_shape = Shape(component_info['CompArea_Top'])
+        self.component_bottom_shape = Shape(component_info['CompArea_Bottom'])
+        self.component_top_prohibit_shape = Shape(component_info['CompProhibitArea_Top'])
+        self.component_bottom_prohibit_shape = Shape(component_info['CompProhibitArea_Bottom'])
         self.hole_area = Shape(component_info['HoleArea'])
         self.pin_dict = component_info['PinDict']
         self.fixed = component_info['Fixed']
@@ -99,8 +116,6 @@ class PCB:
         self.prohibit_area = Shape(pcb_info['ProhibitArea'])
         self.component_dict = dict(zip(pcb_info['ComponentDict'].keys(), [Component(comp) for comp in list(pcb_info['ComponentDict'].values())]))
         self.net_list = dict(zip(pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(pcb_info['NetDict'].values())]))
-        
-        
         
 if __name__=="__main__": 
     
