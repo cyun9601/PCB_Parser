@@ -16,7 +16,10 @@ def plot_line(lines: list[Line], ax, shift=None):
 
 def plot_arc(arcs:list[Arc], ax, shift=None):
     for arc in arcs: 
-        center = arc.get_center()
+        if shift is not None: 
+            center = arc.move(shift)
+        else : 
+            center = arc.get_center()
         width = arc.radius * 2
         height = arc.radius * 2
         angle = 0
@@ -42,7 +45,6 @@ def draw_component(component_dict:dict, ax):
     for component in component_dict.values():
         draw_shape(component.component_top_shape, ax, (component.x, component.y))
 
-
 def show(board:Shape, hole_area:Shape, component_dict:dict, net_list:dict):
     fig = plt.figure(1, figsize=(10, 10), dpi=90)
 
@@ -62,9 +64,9 @@ def show(board:Shape, hole_area:Shape, component_dict:dict, net_list:dict):
     # ax.add_patch(arc)
     ax.set_title('a) valid')
     # 축의 범위 설정
-    # ax.set_xlim([0, 100])
-    # ax.set_ylim([0, 100])
-    ax.set_aspect('equal', 'box')
+    ax.set_xlim([0, 60])
+    ax.set_ylim([0, 150])
+    ax.set_aspect('equal') #, 'box')
     
     plt.savefig(dpi=300, fname='shapely_polygon.png')
 

@@ -41,6 +41,15 @@ class Arc(D_type):
     def get_center(self):
         return (self.centerX, self.centerY)
     
+    def move(self, shift, inplace = False):
+        if inplace == False: 
+            return (self.centerX + shift[0], self.centerY + shift[1])
+        else :
+            self.centerX += shift[0]
+            self.centerY += shift[1]
+            return self.get_center() 
+            
+    
 class Shape:
     def __init__(self, shape_info:dict) -> None:
         ## raw dict
