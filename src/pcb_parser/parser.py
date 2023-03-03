@@ -2,14 +2,13 @@ import json
 from abc import *
 import matplotlib.pyplot as plt
 import os 
-from geometry import Draw_type, Line, Arc
+from .geometry import Draw_type, Line, Arc
 
 class Shape(Draw_type):
     def __init__(self, shape_info:dict) -> None:
         ## raw dict
         self.shape_info = shape_info
         
-        ## split raw dict
         self.type = shape_info['type']
         self.startX = shape_info['StartX']
         self.startY = shape_info['StartY']
@@ -101,7 +100,7 @@ class PCB(Draw_type):
         self.components = Components(pcb_info['ComponentDict'].values()) 
         self.net_list = dict(zip(pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(pcb_info['NetDict'].values())]))
     
-    def draw(self, shift=None, figsize=(10, 10), dpi=300) -> dict:
+    def draw(self, image_name='./draw.png', shift=None, figsize=(10, 10), dpi=300) -> dict:
         fig = plt.figure(figsize=figsize, dpi=dpi)
 
         ax = fig.add_subplot(111)
@@ -115,15 +114,4 @@ class PCB(Draw_type):
         ax.set_ylim([0, 150])
         ax.set_aspect('equal') #, 'box')
         
-        plt.savefig(dpi=dpi, fname='shapely_polygon.png')
-    
-if __name__=="__main__": 
-    
-    os.chdir(os.path.abspath(os.path.dirname(__file__)))
-
-    with open("./data/sample_data.json", 'r') as f:
-        data = json.load(f)
-
-    pcb = PCB(list(data.values())[0])
-    pcb.draw()
-    
+        plt.savefig(dpi=dpi, fname=image_name)

@@ -2,7 +2,22 @@ from abc import *
 from matplotlib.patches import Arc as mpl_Arc
 from matplotlib.lines import Line2D
 import os 
-from abs import Geometry, Draw_type
+from .abs import Draw_type
+
+class Geometry: # dataclass 
+    def __init__(self, **kwargs) -> None:
+        self.type = kwargs['type']
+        self.startX = float(kwargs['StartX'])
+        self.startY = float(kwargs['StartY'])
+        self.endX = float(kwargs['EndX'])
+        self.endY = float(kwargs['EndY'])
+        if kwargs['Radius'] != None: self.radius = float(kwargs['Radius'])
+        if kwargs['SAngle'] != None: self.sAngle = float(kwargs['SAngle'])
+        if kwargs['EAngle'] != None: self.eAngle = float(kwargs['EAngle'])
+        self.direction = kwargs['Direction'] if kwargs['Direction'] != None else None
+        if kwargs['CenterX'] != None: self.centerX = float(kwargs['CenterX'])
+        if kwargs['CenterY'] != None: self.centerY = float(kwargs['CenterY'])
+        
 
 class Line(Geometry, Draw_type):
     def __init__(self, **kwargs) -> None:
@@ -32,13 +47,7 @@ class Line(Geometry, Draw_type):
 class Arc(Geometry, Draw_type):
     def __init__(self, **kwargs) -> None:
         Geometry.__init__(self, **kwargs)
-        self.radius = float(kwargs['Radius'])
-        self.sAngle = float(kwargs['SAngle'])
-        self.eAngle = float(kwargs['EAngle'])
-        self.direction = kwargs['Direction']   
-        self.centerX = float(kwargs['CenterX'])
-        self.centerY = float(kwargs['CenterY'])
-
+        
     def get_center(self):
         return (self.centerX, self.centerY)
     
@@ -67,8 +76,3 @@ class Arc(Geometry, Draw_type):
             theta2 = self.eAngle
         
         ax.add_patch(mpl_Arc(center, width, height, angle, theta1, theta2))
-            
-
-if __name__=="__main__": 
-
-    os.chdir(os.path.abspath(os.path.dirname(__file__)))

@@ -4,3 +4,9 @@
 __pycache__
 *.png
 *.ipynb
+.vscode
+
+# setuptools 
+dist
+build
+*.egg-info
