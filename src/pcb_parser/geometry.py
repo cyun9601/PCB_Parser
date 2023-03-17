@@ -26,6 +26,22 @@ class Line(Geometry, Draw_type):
     def get_line(self):
         return (self.startX, self.endX), (self.startY, self.endY)
 
+    @property 
+    def min_x(self):
+        return min(self.startX, self.endX)
+
+    @property
+    def max_x(self):
+        return max(self.startX, self.endX)
+    
+    @property 
+    def min_y(self):
+        return min(self.startY, self.endY)
+    
+    @property 
+    def max_y(self):
+        return max(self.startY, self.endY)
+
     def translation(self, shift, inplace = False):
         assert len(shift) == 2, "shift must be 2-dimension"
         if inplace == False:
@@ -37,11 +53,11 @@ class Line(Geometry, Draw_type):
             self.endY += shift[1]
             return self.get_line()
     
-    def draw(self, ax, shift = None):
+    def draw(self, ax, shift = None, color='k'):
         if shift is not None:
-            l = Line2D(*self.translation(shift))
+            l = Line2D(*self.translation(shift), color=color)
         else:
-            l = Line2D(*self.get_line())
+            l = Line2D(*self.get_line(), color=color)
         ax.add_line(l)
             
 class Arc(Geometry, Draw_type):
@@ -51,15 +67,35 @@ class Arc(Geometry, Draw_type):
     def get_center(self):
         return (self.centerX, self.centerY)
     
+    @property 
+    def min_x(self): 
+        x_min, y_min, x_max, y_max = self.get_extents().bounds
+        return x_min
+    
+    @property 
+    def max_x(self): 
+        x_min, y_min, x_max, y_max = self.get_extents().bounds
+        return x_max
+    
+    @property 
+    def min_y(self): 
+        x_min, y_min, x_max, y_max = self.get_extents().bounds
+        return y_min
+    
+    @property 
+    def max_y(self): 
+        x_min, y_min, x_max, y_max = self.get_extents().bounds
+        return y_max
+    
     def translation(self, shift, inplace = False):
         if inplace == False: 
             return (self.centerX + shift[0], self.centerY + shift[1])
         else :
             self.centerX += shift[0]
             self.centerY += shift[1]
-            return self.get_center() 
+            return self.get_center()
             
-    def draw(self, ax, shift = None):
+    def draw(self, ax, shift = None, color='k'):
         if shift is not None: 
             center = self.translation(shift)
         else : 
@@ -75,4 +111,4 @@ class Arc(Geometry, Draw_type):
             theta1 = self.sAngle
             theta2 = self.eAngle
         
-        ax.add_patch(mpl_Arc(center, width, height, angle, theta1, theta2))
+        ax.add_patch(mpl_Arc(center, width, height, angle, theta1, theta2, color=color))
