@@ -5,23 +5,23 @@ import os
 from .abs import Draw_type
 
 class Geometry: # dataclass 
-    def __init__(self, **kwargs) -> None:
-        self.type = kwargs['type']
-        self.startX = float(kwargs['StartX'])
-        self.startY = float(kwargs['StartY'])
-        self.endX = float(kwargs['EndX'])
-        self.endY = float(kwargs['EndY'])
-        if kwargs['Radius'] != None: self.radius = float(kwargs['Radius'])
-        if kwargs['SAngle'] != None: self.sAngle = float(kwargs['SAngle'])
-        if kwargs['EAngle'] != None: self.eAngle = float(kwargs['EAngle'])
-        self.direction = kwargs['Direction'] if kwargs['Direction'] != None else None
-        if kwargs['CenterX'] != None: self.centerX = float(kwargs['CenterX'])
-        if kwargs['CenterY'] != None: self.centerY = float(kwargs['CenterY'])
-        
+    def __init__(self, arg_dict) -> None:
+        self.type = arg_dict['type']
+        self.startX = float(arg_dict['StartX'])
+        self.startY = float(arg_dict['StartY'])
+        self.endX = float(arg_dict['EndX'])
+        self.endY = float(arg_dict['EndY'])
+        if arg_dict['Radius'] != None: self.radius = float(arg_dict['Radius'])
+        if arg_dict['SAngle'] != None: self.sAngle = float(arg_dict['SAngle'])
+        if arg_dict['EAngle'] != None: self.eAngle = float(arg_dict['EAngle'])
+        self.direction = arg_dict['Direction'] if arg_dict['Direction'] != None else None
+        if arg_dict['CenterX'] != None: self.centerX = float(arg_dict['CenterX'])
+        if arg_dict['CenterY'] != None: self.centerY = float(arg_dict['CenterY'])
+    
 
 class Line(Geometry, Draw_type):
-    def __init__(self, **kwargs) -> None:
-        Geometry.__init__(self, **kwargs)
+    def __init__(self, arg_dict) -> None:
+        Geometry.__init__(self, arg_dict)
 
     def get_line(self):
         return (self.startX, self.endX), (self.startY, self.endY)
@@ -61,8 +61,8 @@ class Line(Geometry, Draw_type):
         ax.add_line(l)
             
 class Arc(Geometry, Draw_type):
-    def __init__(self, **kwargs) -> None:
-        Geometry.__init__(self, **kwargs)
+    def __init__(self, arg_dict) -> None:
+        Geometry.__init__(self, arg_dict)
         
     def get_center(self):
         return (self.centerX, self.centerY)
@@ -112,3 +112,70 @@ class Arc(Geometry, Draw_type):
             theta2 = self.eAngle
         
         ax.add_patch(mpl_Arc(center, width, height, angle, theta1, theta2, color=color))
+        
+        
+class Area(Draw_type):
+    def __init__(self, area_info:dict) -> None:
+        self.area_info = area_info
+        # self.type = area_info['type']
+        # self.startX = area_info['StartX']
+        # self.startY = area_info['StartY']
+        # self.endX = area_info['EndX']
+        # self.endY = area_info['EndY']
+        # self.radius = area_info['Radius']
+        # self.sAngle = area_info['SAngle']
+        # self.eAngle = area_info['EAngle']
+        # self.direction = area_info['Direction']
+        # self.centerX = area_info['CenterX'] # center X of arc
+        # self.centerY = area_info['CenterY'] # center Y of arc       
+        
+        ## processed data
+        self.lines, self.arcs = self.parsing_component(self.area_info)        
+        
+    def draw(self, ax, shift=None, color='k'):
+        for line in self.lines:
+            line.draw(ax, shift=shift, color=color)
+        for arc in self.arcs:
+            arc.draw(ax, shift=shift, color=color)
+    
+    @property 
+    def min_x(self):
+        return min([line.min_x for line in self.lines])
+    
+    @property 
+    def max_x(self):
+        return max([line.max_x for line in self.lines])
+    
+    @property 
+    def min_y(self):
+        return min([line.min_y for line in self.lines])
+    
+    @property 
+    def max_y(self):
+        return max([line.max_y for line in self.lines])
+    
+    @property 
+    def bounding_box(self):
+        return self.min_x, self.max_x, self.min_y, self.max_y
+    
+    @property 
+    def width(self):
+        return self.max_x - self.min_x
+    
+    @property 
+    def height(self):
+        return self.max_y - self.min_y
+    
+    @staticmethod
+    def parsing_component(area_info):
+        line_list = []
+        arc_list = []
+
+        draw_component_list = [dict(zip(area_info.keys(), values)) for values in list(zip(*area_info.values()))]
+
+        for draw_component in draw_component_list:
+            if draw_component['type'] == 'D_LineType':
+                line_list.append(Line(draw_component))
+            elif draw_component['type'] == 'D_ArcType':
+                arc_list.append(Arc(draw_component))
+        return line_list, arc_list

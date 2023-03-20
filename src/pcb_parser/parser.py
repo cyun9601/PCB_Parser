@@ -21,7 +21,7 @@ class Area(Draw_type):
         self.centerY = area_info['CenterY'] # center Y of arc       
         
         ## processed data
-        self.lines, self.arcs = self._parsing_component(self.area_info)        
+        self.lines, self.arcs = self.parsing_component(self.area_info)        
         
     def draw(self, ax, shift=None, color='k'):
         for line in self.lines:
@@ -58,7 +58,7 @@ class Area(Draw_type):
         return self.max_y - self.min_y
     
     @staticmethod
-    def _parsing_component(area_info):
+    def parsing_component(area_info):
         line_list = []
         arc_list = []
 
@@ -66,9 +66,9 @@ class Area(Draw_type):
 
         for draw_component in draw_component_list:
             if draw_component['type'] == 'D_LineType':
-                line_list.append(Line(**draw_component))
+                line_list.append(Line(draw_component))
             elif draw_component['type'] == 'D_ArcType':
-                arc_list.append(Arc(**draw_component))
+                arc_list.append(Arc(draw_component))
         return line_list, arc_list
 
 class Net:
