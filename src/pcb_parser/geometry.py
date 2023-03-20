@@ -42,6 +42,25 @@ class Line(Geometry, Draw_type):
     def max_y(self):
         return max(self.startY, self.endY)
 
+    @property
+    def bounding_box(self):
+        raise NotImplementedError
+
+    @property
+    def w(self):
+        raise NotImplementedError
+
+    @property
+    def h(self):
+        raise NotImplementedError
+
+    def draw(self, ax, shift = None, color='k'):
+        if shift is not None:
+            l = Line2D(*self.translation(shift), color=color)
+        else:
+            l = Line2D(*self.get_line(), color=color)
+        ax.add_line(l)
+            
     def translation(self, shift, inplace = False):
         assert len(shift) == 2, "shift must be 2-dimension"
         if inplace == False:
@@ -52,21 +71,12 @@ class Line(Geometry, Draw_type):
             self.startY += shift[1]
             self.endY += shift[1]
             return self.get_line()
-    
-    def draw(self, ax, shift = None, color='k'):
-        if shift is not None:
-            l = Line2D(*self.translation(shift), color=color)
-        else:
-            l = Line2D(*self.get_line(), color=color)
-        ax.add_line(l)
+            
             
 class Arc(Geometry, Draw_type):
     def __init__(self, arg_dict) -> None:
         Geometry.__init__(self, arg_dict)
         
-    def get_center(self):
-        return (self.centerX, self.centerY)
-    
     @property 
     def min_x(self): 
         x_min, y_min, x_max, y_max = self.get_extents().bounds
@@ -87,13 +97,17 @@ class Arc(Geometry, Draw_type):
         x_min, y_min, x_max, y_max = self.get_extents().bounds
         return y_max
     
-    def translation(self, shift, inplace = False):
-        if inplace == False: 
-            return (self.centerX + shift[0], self.centerY + shift[1])
-        else :
-            self.centerX += shift[0]
-            self.centerY += shift[1]
-            return self.get_center()
+    @property
+    def bounding_box(self):
+        raise NotImplementedError
+    
+    @property
+    def w(self):
+        raise NotImplementedError
+    
+    @property
+    def h(self):
+        raise NotImplementedError
             
     def draw(self, ax, shift = None, color='k'):
         if shift is not None: 
@@ -113,31 +127,24 @@ class Arc(Geometry, Draw_type):
         
         ax.add_patch(mpl_Arc(center, width, height, angle, theta1, theta2, color=color))
         
+    def translation(self, shift, inplace = False):
+        if inplace == False: 
+            return (self.centerX + shift[0], self.centerY + shift[1])
+        else :
+            self.centerX += shift[0]
+            self.centerY += shift[1]
+            return self.get_center()
+        
+    def get_center(self):
+        return (self.centerX, self.centerY)
         
 class Area(Draw_type):
     def __init__(self, area_info:dict) -> None:
         self.area_info = area_info
-        # self.type = area_info['type']
-        # self.startX = area_info['StartX']
-        # self.startY = area_info['StartY']
-        # self.endX = area_info['EndX']
-        # self.endY = area_info['EndY']
-        # self.radius = area_info['Radius']
-        # self.sAngle = area_info['SAngle']
-        # self.eAngle = area_info['EAngle']
-        # self.direction = area_info['Direction']
-        # self.centerX = area_info['CenterX'] # center X of arc
-        # self.centerY = area_info['CenterY'] # center Y of arc       
         
         ## processed data
         self.lines, self.arcs = self.parsing_component(self.area_info)        
         
-    def draw(self, ax, shift=None, color='k'):
-        for line in self.lines:
-            line.draw(ax, shift=shift, color=color)
-        for arc in self.arcs:
-            arc.draw(ax, shift=shift, color=color)
-    
     @property 
     def min_x(self):
         return min([line.min_x for line in self.lines])
@@ -159,12 +166,21 @@ class Area(Draw_type):
         return self.min_x, self.max_x, self.min_y, self.max_y
     
     @property 
-    def width(self):
+    def w(self):
         return self.max_x - self.min_x
     
     @property 
-    def height(self):
+    def h(self):
         return self.max_y - self.min_y
+    
+    def draw(self, ax, shift=None, color='k'):
+        for line in self.lines:
+            line.draw(ax, shift=shift, color=color)
+        for arc in self.arcs:
+            arc.draw(ax, shift=shift, color=color)
+    
+    def translation(self):
+        raise NotImplementedError
     
     @staticmethod
     def parsing_component(area_info):
@@ -179,3 +195,72 @@ class Area(Draw_type):
             elif draw_component['type'] == 'D_ArcType':
                 arc_list.append(Arc(draw_component))
         return line_list, arc_list
+    
+class Component(Draw_type):
+    def __init__(self, component_info:dict) -> None:
+        self.part_number = int(component_info['PartNo'])
+        self.name = component_info['Name']
+        self.placed_layer = component_info['PlacedLayer']
+        self.x = float(component_info['X']) # center X
+        self.y = float(component_info['Y']) # center Y
+        self.angle = float(component_info['Angle'])
+        self.ecad_angle = float(component_info['ECADAngle'])
+        self.pin_num = int(component_info['Pin_Num'])
+        self.height = float(component_info['Height']) if component_info['Height'] != None else None
+        self.part_name = component_info['PartName']
+        self.ecad_part_name = component_info['ECADPartName']
+        self.package_name = component_info['PackageName']
+        self.component_top_area = Area(component_info['CompArea_Top'])
+        self.component_bottom_area = Area(component_info['CompArea_Bottom'])
+        self.component_top_prohibit_area = Area(component_info['CompProhibitArea_Top'])
+        self.component_bottom_prohibit_area = Area(component_info['CompProhibitArea_Bottom'])
+        self.hole_area = Area(component_info['HoleArea'])
+        self.pin_dict = component_info['PinDict']
+        self.fixed = component_info['Fixed']
+        self.group = component_info['Group']
+
+    @property
+    def min_x(self):
+        raise NotImplementedError
+    
+    @property
+    def max_x(self):
+        raise NotImplementedError
+    
+    @property
+    def min_y(self):
+        raise NotImplementedError
+    
+    @property
+    def max_y(self):
+        raise NotImplementedError
+    
+    @property
+    def bounding_box(self):
+        raise NotImplementedError
+    
+    @property
+    def w(self):
+        raise NotImplementedError
+    
+    @property
+    def h(self):
+        raise NotImplementedError
+    
+    def draw(self, ax, shift=None, color='k'): 
+        if self.placed_layer == 'TOP':
+            self.component_top_area.draw(ax, shift=(self.x, self.y), color=color)
+        elif self.placed_layer == 'BOTTOM':
+            self.component_bottom_area.draw(ax, shift=(self.x, self.y), color=color)
+        self.hole_area.draw(ax, shift=shift, color=color)
+
+    def translation(self):
+        raise NotImplementedError
+        
+    def move(self, center_x, center_y):
+        self.x = center_x 
+        self.y = center_y 
+
+    def shift(self, x, y):
+        self.x = self.x + x
+        self.y = self.y + y 

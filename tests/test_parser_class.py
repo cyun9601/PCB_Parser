@@ -7,12 +7,8 @@ os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 with open("../data/sample_data.json", 'r') as f:
     data = json.load(f)
-
-pcb = PCB(list(data.values())[0])
-
-print("board info :", pcb.board)
-print("board info :", pcb.board)
-
+    
+pcb = PCB(data)
 
 pcb.draw('./pcb_top.png', layer='TOP')
 pcb.draw('./pcb_bottom.png', layer='BOTTOM')
