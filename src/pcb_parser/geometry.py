@@ -39,6 +39,9 @@ class Point:
         self.y = y
         return Point(x, y)
     
+    def to_tuple(self):
+        return (self.x, self.y)
+    
     def __repr__(self) -> str:
         return f'Point({self.x}, {self.y})'
     
@@ -62,6 +65,10 @@ class Shape: # dataclass
     @property 
     def endY(self):
         return self.end_point.y
+    
+    @abstractmethod
+    def ext_points(self):
+        ...
 
 def dict2basic_type(dictionary):
     if dictionary['type'] == 'D_LineType':
@@ -138,6 +145,9 @@ class Line(Shape):
     
     def move_to(self, point:Point):
         raise NotImplementedError
+           
+    def ext_points(self):
+        return super().ext_points()
                 
 class Arc(Shape):
     def __init__(self, arg_dict) -> None:
@@ -186,7 +196,7 @@ class Arc(Shape):
         if shift is not None: 
             center = self.move(shift)
         else : 
-            center = self.get_center()
+            center = self.center
         width = self.radius * 2
         height = self.radius * 2
         angle = 0
@@ -198,26 +208,30 @@ class Arc(Shape):
             theta1 = self.sAngle
             theta2 = self.eAngle
         
-        ax.add_patch(mpl_Arc(center, width, height, angle, theta1, theta2, color=color))
+        ax.add_patch(mpl_Arc(center.to_tuple(), width, height, angle, theta1, theta2, color=color))
         
     def move(self, shift, inplace = False):
         if inplace == False: 
-            return (self.centerX + shift[0], self.centerY + shift[1])
+            return Point(self.centerX + shift[0], self.centerY + shift[1])
         else :
             self.centerX += shift[0]
             self.centerY += shift[1]
-            return self.get_center()
+            return Point(self.center)
         
     def move_to(self):
         raise NotImplementedError    
     
-    def get_center(self):
-        return (self.centerX, self.centerY)
+    @property
+    def center(self):
+        return Point(self.centerX, self.centerY)
+    
+    def ext_points(self):
+        return super().ext_points()
     
 class Poligon(Draw):
     def __init__(self, area_info:dict) -> None:
         # self.area_info = area_info
-        self.lines, self.arcs = self.parsing_component(area_info)        
+        self.lines, self.arcs = self.parsing_shape(area_info)        
         
     @property 
     def min_x(self):
@@ -260,7 +274,7 @@ class Poligon(Draw):
         raise NotImplementedError
     
     @staticmethod
-    def parsing_component(area_info):
+    def parsing_shape(area_info):
         line_list = []
         arc_list = []
 
