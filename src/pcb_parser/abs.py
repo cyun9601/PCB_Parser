@@ -2,8 +2,7 @@ from abc import *
 from matplotlib.patches import Arc as mpl_Arc
 from matplotlib.lines import Line2D
 import os 
-
-class Draw(metaclass = ABCMeta):
+class Object(metaclass = ABCMeta):
     @abstractmethod
     def min_x(self):
         ... 
@@ -22,6 +21,7 @@ class Draw(metaclass = ABCMeta):
     
     @abstractmethod
     def bounding_box(self):
+        # min_x, max_x, min_y, max_y
         ...
     
     @abstractmethod

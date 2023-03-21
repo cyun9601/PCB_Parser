@@ -1,9 +1,11 @@
 from abc import *
 from matplotlib.patches import Arc as mpl_Arc
 from matplotlib.lines import Line2D
-from .abs import Draw
-
-class Point:
+from .abs import Object
+import math
+import numpy as np 
+ 
+class Point(Object):
     def __init__(self, x, y):
         self.x = x 
         self.y = y 
@@ -45,7 +47,7 @@ class Point:
     def __repr__(self) -> str:
         return f'Point({self.x}, {self.y})'
     
-class Shape: # dataclass 
+class Curve(Object): # dataclass 
     def __init__(self, arg_dict) -> None:
         self.start_point = Point(float(arg_dict['StartX']), float(arg_dict['StartY']))
         self.end_point = Point(float(arg_dict['EndX']), float(arg_dict['EndY']))
@@ -69,18 +71,10 @@ class Shape: # dataclass
     @abstractmethod
     def ext_points(self):
         ...
-
-def dict2basic_type(dictionary):
-    if dictionary['type'] == 'D_LineType':
-        return Line(dictionary)
-    elif dictionary['type'] == 'D_ArcType':
-        return Arc(dictionary)
-    else:
-        raise ValueError("type must be D_LineType or D_ArcType")
     
-class Line(Shape):
+class Line(Curve):
     def __init__(self, arg_dict) -> None:
-        Shape.__init__(self, arg_dict)
+        Curve.__init__(self, arg_dict)
         
     def get_line(self):
         return (self.startX, self.endX), (self.startY, self.endY)
@@ -119,11 +113,15 @@ class Line(Shape):
     
     @property
     def w(self):
-        raise self.max_x - self.min_x
+        return self.max_x - self.min_x
 
     @property
     def h(self):
-        raise self.max_y - self.min_y
+        return self.max_y - self.min_y
+
+    @property 
+    def length(self):
+        return math.sqrt((self.endX - self.startX) ** 2 + (self.endY - self.startY) ** 2)
 
     def draw(self, ax, shift = None, color='k'):
         if shift is not None:
@@ -146,12 +144,21 @@ class Line(Shape):
     def move_to(self, point:Point):
         raise NotImplementedError
            
-    def ext_points(self):
-        return super().ext_points()
+    def ext_points(self, delta=0.01) -> list[Point]:
+        
+        n_points = int(np.ceil(self.length / delta))
+    
+        x_list = np.linspace(self.startX, self.endX, n_points)
+        y_list = np.linspace(self.startY, self.endY, n_points)
+        
+        points = []
+        for x, y in zip(x_list, y_list):
+            points.append(Point(x, y))
+        return points 
                 
-class Arc(Shape):
+class Arc(Curve):
     def __init__(self, arg_dict) -> None:
-        Shape.__init__(self, arg_dict)
+        Curve.__init__(self, arg_dict)
         
         if arg_dict['Radius'] != None: self.radius = float(arg_dict['Radius'])
         if arg_dict['SAngle'] != None: self.sAngle = float(arg_dict['SAngle'])
@@ -182,7 +189,7 @@ class Arc(Shape):
     
     @property
     def bounding_box(self):
-        raise NotImplementedError
+        raise self.min_x, self.max_x, self.min_y, self.max_y
     
     @property
     def w(self):
@@ -225,10 +232,21 @@ class Arc(Shape):
     def center(self):
         return Point(self.centerX, self.centerY)
     
-    def ext_points(self):
-        return super().ext_points()
+    def ext_points(self, delta = 0.1) -> list[]:
+        if self.sAngle > self.eAngle:
+            self.sAngle, self.eAngle = self.eAngle, self.sAngle
+            
+        points = []
+        cur_angle = self.sAngle
+        while cur_angle <= self.eAngle: 
+            angle_rad = math.radians(cur_angle)
+            x = self.centerX + self.radius * math.cos(angle_rad)
+            y = self.centerY + self.radius * math.sin(angle_rad)
+            points.append(Point(x, y))
+            cur_angle += delta            
+        return points
     
-class Poligon(Draw):
+class Poligon(Object):
     def __init__(self, area_info:dict) -> None:
         # self.area_info = area_info
         self.lines, self.arcs = self.parsing_shape(area_info)        
