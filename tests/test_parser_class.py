@@ -2,6 +2,7 @@ import pcb_parser
 from pcb_parser import PCB
 import os 
 import json
+import cv2 
  
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 

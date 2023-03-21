@@ -3,6 +3,8 @@ from matplotlib.patches import Arc as mpl_Arc
 from matplotlib.lines import Line2D
 import os 
 from .abs import Draw_type
+import cv2
+import numpy as np 
 
 class Geometry: # dataclass 
     def __init__(self, arg_dict) -> None:
@@ -17,7 +19,6 @@ class Geometry: # dataclass
         self.direction = arg_dict['Direction'] if arg_dict['Direction'] != None else None
         if arg_dict['CenterX'] != None: self.centerX = float(arg_dict['CenterX'])
         if arg_dict['CenterY'] != None: self.centerY = float(arg_dict['CenterY'])
-    
 
 class Line(Geometry, Draw_type):
     def __init__(self, arg_dict) -> None:
@@ -71,7 +72,12 @@ class Line(Geometry, Draw_type):
             self.startY += shift[1]
             self.endY += shift[1]
             return self.get_line()
-            
+
+    def move(self):
+        raise NotImplementedError 
+    
+    def move_to(self):
+        raise NotImplementedError
             
 class Arc(Geometry, Draw_type):
     def __init__(self, arg_dict) -> None:
@@ -138,6 +144,12 @@ class Arc(Geometry, Draw_type):
     def get_center(self):
         return (self.centerX, self.centerY)
         
+    def move(self):
+        raise NotImplementedError 
+    
+    def move_to(self):
+        raise NotImplementedError
+        
 class Area(Draw_type):
     def __init__(self, area_info:dict) -> None:
         self.area_info = area_info
@@ -182,6 +194,12 @@ class Area(Draw_type):
     def translation(self):
         raise NotImplementedError
     
+    def move(self):
+        raise NotImplementedError 
+    
+    def move_to(self):
+        raise NotImplementedError
+    
     @staticmethod
     def parsing_component(area_info):
         line_list = []
@@ -218,6 +236,7 @@ class Component(Draw_type):
         self.pin_dict = component_info['PinDict']
         self.fixed = component_info['Fixed']
         self.group = component_info['Group']
+        # self.outline_img = self.get_outline_img() # Outline 
 
     @property
     def min_x(self):
@@ -256,11 +275,15 @@ class Component(Draw_type):
 
     def translation(self):
         raise NotImplementedError
-        
-    def move(self, center_x, center_y):
-        self.x = center_x 
-        self.y = center_y 
 
-    def shift(self, x, y):
+    def move(self, x, y):
         self.x = self.x + x
         self.y = self.y + y 
+        
+    def move_to(self, center_x, center_y):
+        self.x = center_x 
+        self.y = center_y 
+        
+    # def get_outline_img(self):
+        # img = np.zeros()
+        # pass

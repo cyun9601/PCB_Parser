@@ -1,8 +1,6 @@
 import json 
 from abc import *
 import matplotlib.pyplot as plt
-import os 
-from .abs import Draw_type
 from .geometry import Component, Area
 
 class Net: # dataclass 
@@ -11,45 +9,16 @@ class Net: # dataclass
         self.name = net_info['Name']
         self.pin_no = net_info['PinNo']
 
-class PCB(Draw_type):
+class PCB:
     def __init__(self, pcb_dict:json) -> None:
-        
         self.pcb_info = list(pcb_dict.values())[0]
         self.file_name = self.pcb_info['FileName']
         self.file_format = self.pcb_info['FileFormat']
-        self.board = Area(self.pcb_info['BOARD_FIGURE'])
+        self.board = Area(self.pcb_info['BOARD_FIGURE']) 
         self.hole_area = Area(self.pcb_info['HoleArea'])
         self.prohibit_area = Area(self.pcb_info['ProhibitArea'])
         self.components_dict = {comp_info['PartName']:Component(comp_info) for comp_info in self.pcb_info['ComponentDict'].values()}
         self.net_list = dict(zip(self.pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(self.pcb_info['NetDict'].values())]))
-    
-    @property
-    def min_x():
-        raise NotImplementedError
-    
-    @property
-    def max_x():
-        raise NotImplementedError
-    
-    @property
-    def min_y():
-        raise NotImplementedError
-    
-    @property
-    def max_y():
-        raise NotImplementedError
-    
-    @property
-    def bounding_box():
-        raise NotImplementedError
-    
-    @property
-    def w():
-        raise NotImplementedError
-    
-    @property
-    def h():
-        raise NotImplementedError
     
     def draw(self, image_name:str, layer:str, only_fixed:bool=False, shift=None, save=True, figsize=(10, 10), color='k', dpi:int=300) -> dict:
         fig = plt.figure(figsize=figsize, dpi=dpi)
@@ -73,9 +42,6 @@ class PCB(Draw_type):
             plt.savefig(dpi=dpi, fname=image_name)
         return fig, ax
     
-    def translation(self):  
-        raise NotImplementedError
-            
     @property 
     def get_pcb_size(self):
         return self.board.bounding_box

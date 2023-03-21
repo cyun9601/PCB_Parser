@@ -37,5 +37,13 @@ class Draw_type(metaclass = ABCMeta):
         ...
         
     @abstractmethod 
-    def translation(self, shift, inplace = False):
+    def translation(self):
+        ... 
+    
+    @abstractmethod
+    def move(self): 
+        ...
+        
+    @abstractmethod 
+    def move_to(self):
         ... 
