@@ -1,7 +1,7 @@
 import json 
 from abc import *
 import matplotlib.pyplot as plt
-from .geometry import Component, Area
+from .geometry import Component, Poligon
 
 class Net: # dataclass 
     def __init__(self, net_info:dict) -> None:
@@ -14,9 +14,9 @@ class PCB:
         self.pcb_info = list(pcb_dict.values())[0]
         self.file_name = self.pcb_info['FileName']
         self.file_format = self.pcb_info['FileFormat']
-        self.board = Area(self.pcb_info['BOARD_FIGURE']) 
-        self.hole_area = Area(self.pcb_info['HoleArea'])
-        self.prohibit_area = Area(self.pcb_info['ProhibitArea'])
+        self.board = Poligon(self.pcb_info['BOARD_FIGURE']) 
+        self.hole_area = Poligon(self.pcb_info['HoleArea'])
+        self.prohibit_area = Poligon(self.pcb_info['ProhibitArea'])
         self.components_dict = {comp_info['PartName']:Component(comp_info) for comp_info in self.pcb_info['ComponentDict'].values()}
         self.net_list = dict(zip(self.pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(self.pcb_info['NetDict'].values())]))
     

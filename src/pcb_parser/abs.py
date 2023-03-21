@@ -3,7 +3,7 @@ from matplotlib.patches import Arc as mpl_Arc
 from matplotlib.lines import Line2D
 import os 
 
-class Draw_type(metaclass = ABCMeta):
+class Draw(metaclass = ABCMeta):
     @abstractmethod
     def min_x(self):
         ... 
@@ -36,10 +36,6 @@ class Draw_type(metaclass = ABCMeta):
     def draw(self):
         ...
         
-    @abstractmethod 
-    def translation(self):
-        ... 
-    
     @abstractmethod
     def move(self): 
         ...
