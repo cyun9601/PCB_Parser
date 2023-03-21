@@ -44,6 +44,9 @@ class Point(Object):
     def to_tuple(self):
         return (self.x, self.y)
     
+    def draw(self):
+        raise NotImplementedError
+    
     def __repr__(self) -> str:
         return f'Point({self.x}, {self.y})'
     
@@ -52,7 +55,7 @@ class Curve(Object): # dataclass
         self.start_point = Point(float(arg_dict['StartX']), float(arg_dict['StartY']))
         self.end_point = Point(float(arg_dict['EndX']), float(arg_dict['EndY']))
         
-    @property 
+    @property
     def startX(self):
         return self.start_point.x
     
@@ -71,6 +74,9 @@ class Curve(Object): # dataclass
     @abstractmethod
     def ext_points(self):
         ...
+    
+    def draw(self):
+        raise NotImplementedError
     
 class Line(Curve):
     def __init__(self, arg_dict) -> None:
@@ -189,7 +195,7 @@ class Arc(Curve):
     
     @property
     def bounding_box(self):
-        raise self.min_x, self.max_x, self.min_y, self.max_y
+        return self.min_x, self.max_x, self.min_y, self.max_y
     
     @property
     def w(self):
@@ -232,7 +238,7 @@ class Arc(Curve):
     def center(self):
         return Point(self.centerX, self.centerY)
     
-    def ext_points(self, delta = 0.1) -> list[]:
+    def ext_points(self, delta = 0.1) -> list[Point]:
         if self.sAngle > self.eAngle:
             self.sAngle, self.eAngle = self.eAngle, self.sAngle
             
