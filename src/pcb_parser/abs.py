@@ -2,7 +2,10 @@ from abc import *
 from matplotlib.patches import Arc as mpl_Arc
 from matplotlib.lines import Line2D
 import os 
-class Object(metaclass = ABCMeta):
+import copy 
+
+class Object():
+    
     @abstractmethod
     def min_x(self):
         ... 
@@ -43,3 +46,10 @@ class Object(metaclass = ABCMeta):
     @abstractmethod 
     def move_to(self):
         ... 
+        
+    @abstractmethod 
+    def center(self):
+        ...
+        
+    def copy(self):
+        return copy.deepcopy(self)
