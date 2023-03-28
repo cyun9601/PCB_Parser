@@ -20,17 +20,17 @@ class PCB:
         self.components_dict = {comp_info['PartName']:Component(comp_info) for comp_info in self.pcb_info['ComponentDict'].values()}
         self.net_list = dict(zip(self.pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(self.pcb_info['NetDict'].values())]))
     
-    def draw(self, image_name:str, layer:str, only_fixed:bool=False, shift_x=0, shift_y=0, save=True, figsize=(10, 10), color='k', dpi:int=300) -> dict:
+    def draw_mat(self, image_name:str, layer:str, only_fixed:bool=False, shift_x=0, shift_y=0, save=True, figsize=(10, 10), color='k', dpi:int=300) -> dict:
         fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_subplot(111)
         
-        self.board.draw(ax, shift_x=shift_x, shift_y=shift_y, color=color)
-        self.hole_area.draw(ax, shift_x=shift_x, shift_y=shift_y, color=color)
+        self.board.draw_mat(ax, shift_x=shift_x, shift_y=shift_y, color=color)
+        self.hole_area.draw_mat(ax, shift_x=shift_x, shift_y=shift_y, color=color)
         
         # draw components
         for _, v in self.components_dict.items():
             # if v.placed_layer == layer and (not only_fixed or v.fixed):
-            v.draw(ax, layer, shift_x=shift_x, shift_y=shift_y, color=color)
+            v.draw_mat(ax, layer, shift_x=shift_x, shift_y=shift_y, color=color)
         
         # ax.set_title('a) valid')
         min_x, max_x, min_y, max_y = self.get_size

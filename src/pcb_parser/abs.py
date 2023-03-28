@@ -36,7 +36,7 @@ class Object():
         ... 
         
     @abstractmethod
-    def draw(self):
+    def draw_mat(self):
         ...
         
     @abstractmethod
