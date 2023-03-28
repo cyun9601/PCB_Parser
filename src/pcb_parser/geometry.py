@@ -5,7 +5,10 @@ from .abs import Object
 import math
 import numpy as np 
 from typing import Union  
- 
+import cv2 
+
+
+
 class Point(Object):
     def __init__(self, x, y):
         self.x = x 
@@ -137,11 +140,11 @@ class Line(Curve):
     def length(self):
         return math.sqrt((self.end.x - self.start.x) ** 2 + (self.end.y - self.start.y) ** 2)
 
-    def draw(self, ax, shift_x:0, shift_y:0, color='k'):
+    def draw_mat(self, ax, shift_x:float=0, shift_y:float=0, color='k'):
         moved_ = self.move(shift_x, shift_y)
         l = Line2D([moved_.start.x, moved_.end.x], [moved_.start.y, moved_.end.y], color=color)
         ax.add_line(l)
-            
+        
     def move(self, x, y, inplace = False) -> 'Line':
         if inplace == False:
             return Line([Point(self.start.x + x, self.start.y + y), Point(self.end.x + x, self.end.y + y)])
@@ -224,7 +227,7 @@ class Arc(Curve):
     def h(self):
         raise NotImplementedError
             
-    def draw(self, ax, shift_x=0, shift_y=0, color='k'):
+    def draw_mat(self, ax, shift_x=0, shift_y=0, color='k'):
         center = self.move(shift_x, shift_y).center
         width = self.radius * 2
         height = self.radius * 2
@@ -238,6 +241,7 @@ class Arc(Curve):
             theta2 = self.eAngle
         
         ax.add_patch(mpl_Arc(center.to_tuple(), width, height, angle, theta1, theta2, color=color))
+        
         
     def move(self, x, y, inplace = False) -> 'Arc':
         if inplace == False: 
@@ -335,11 +339,25 @@ class Polygon(Object):
     def h(self):
         return self.max_y - self.min_y
     
-    def draw(self, ax, shift_x=0, shift_y=0, color='k'):
+    def draw_mat(self, ax, shift_x=0, shift_y=0, color='k'):
         for line in self.lines:
             line.draw(ax, shift_x, shift_y, color=color)
         for arc in self.arcs:
             arc.draw(ax, shift_x, shift_y, color=color)
+    
+    #def draw_cv(self, arr, color=None):
+        #line에서 가장 작은 값을 뽑기    
+        #min(#for line in self.lines:
+        #    arr = line.draw_cv(arr)
+            
+            
+            
+        #for arc in self.arcs:
+            #arr = arc.draw_cv(arr)
+            
+            
+            
+    #    return arr
     
     def move(self, x, y, inplace=False) -> 'Polygon':
         self.lines = [line.move(x, y, inplace) for line in self.lines]
@@ -376,7 +394,7 @@ class Component:
         self.part_name = component_info['PartName']
         self.ecad_part_name = component_info['ECADPartName']
         self.package_name = component_info['PackageName']
-        self.top_area = Polygon(component_info['CompArea_Top']).move(self.center.x, self.center.y)
+        self.top_area = Polygon(component_info['CompArea_Top']).move(self.center.x, self.center.y) #중심축에서
         self.bottom_area = Polygon(component_info['CompArea_Bottom']).move(self.center.x, self.center.y)
         self.top_prohibit_area = Polygon(component_info['CompProhibitArea_Top']).move(self.center.x, self.center.y)
         self.bottom_prohibit_area = Polygon(component_info['CompProhibitArea_Bottom']).move(self.center.x, self.center.y)
@@ -385,7 +403,27 @@ class Component:
         self.fixed = component_info['Fixed']
         self.group = component_info['Group']
         # self.outline_img = self.get_outline_img() # Outline
+        #self.cv_image = [ if component_info(['CompArea_Top']]np.zeros((int(round(self.height/0.005,0)),int(round(self.w/0.005,0)),3), dtype=np.uint8) #list [앞 , 뒤]
+        #p_h = int((self.top_area + self.bottom_area).h/0.005)
+        #p_w = int((self.top_area + self.bottom_area).w/0.005)
+        #arr = np.ones((p_h,p_w,3), dtype=np.uint8)*255    
+        #self.cv_image = [self.top_area.draw_cv(arr), self.bottom_area.draw_cv(arr)]
+        
+        #폴리곤 draw_cv 메소드 (self,arr, 최소픽셀단위)
 
+    #def _draw_cv(self):
+    #    p_h = int(round((self.top_area + self.bottom_area).h/0.005),0)
+    #    p_w = int(round((self.top_area + self.bottom_area).w/0.005),0)
+    #    arr = np.ones((p_h,p_w,3), dtype=np.uint8)*255    
+    #    area = self.top_area+self.bottom_area
+    #    bbox_x , = self.bounding_box
+        
+        
+    #    return  
+        
+    
+    
+    
     def draw(self, ax, layer, shift_x=0, shift_y=0, color='k'): 
         if layer == 'TOP':
             self.top_area.draw(ax, shift_x=shift_x, shift_y=shift_y, color=color)
