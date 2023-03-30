@@ -20,8 +20,8 @@ dpi = 300
 ## Component 객체의 draw_cv 테스트 
 component_name = '6630A90002C-BSBPBF-CN485_STRAIGHT'
 comp = pcb.components_dict[component_name]
-top_img, bottom_img, t, b = comp.draw_cv(resolution=0.05) 
-# cv2.imshow('TOP image', top_img)
+top_img, bottom_img = comp.draw_cv(resolution=0.05) 
+cv2.imshow('TOP image', top_img)
 cv2.imshow('BOTTOM image', bottom_img)
 # cv2.imshow('T', t)
 cv2.imshow('B', b)

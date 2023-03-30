@@ -500,26 +500,26 @@ class Component:
             total_h = int(round(total_area.h / resolution, 0)) + 1
             total_w = int(round(total_area.w / resolution, 0)) + 1
             
-            # # TOP
-            # total_top_img = np.ones((total_h, total_w)) * 255
-            # total_top_img = total_top_img.astype(np.uint8)
+            # TOP
+            total_top_img = np.ones((total_h, total_w)) * 255
+            total_top_img = total_top_img.astype(np.uint8)
 
-            # top_img = self.top_area.draw_cv(resolution)
+            top_img = self.top_area.draw_cv(resolution)
             
-            # ## Component의 원점 매핑 시 BBox 계산. 
-            # top_moved_min_x = self.top_area.min_x - total_area.min_x
-            # top_moved_max_x = self.top_area.max_x - total_area.min_x
-            # top_moved_min_y = self.top_area.min_y - total_area.min_y 
-            # top_moved_max_y = self.top_area.max_y - total_area.min_y 
+            ## Component의 원점 매핑 시 BBox 계산. 
+            top_moved_min_x = self.top_area.min_x - total_area.min_x
+            top_moved_max_x = self.top_area.max_x - total_area.min_x
+            top_moved_min_y = self.top_area.min_y - total_area.min_y 
+            top_moved_max_y = self.top_area.max_y - total_area.min_y 
             
-            # ## Pixel 영역에서의 BBox 영역 매핑 
-            # top_min_pix_h = total_h - 1 - int(round((top_moved_max_y / resolution), 0))
-            # top_max_pix_h = total_h - 1 - int(round((top_moved_min_y / resolution), 0))
-            # top_min_pix_w = int(round((top_moved_min_x / resolution), 0))
-            # top_max_pix_w = int(round((top_moved_max_x / resolution), 0))
+            ## Pixel 영역에서의 BBox 영역 매핑 
+            top_min_pix_h = total_h - 1 - int(round((top_moved_max_y / resolution), 0))
+            top_max_pix_h = total_h - 1 - int(round((top_moved_min_y / resolution), 0))
+            top_min_pix_w = int(round((top_moved_min_x / resolution), 0))
+            top_max_pix_w = int(round((top_moved_max_x / resolution), 0))
             
-            # ## 이미지 삽입 
-            # total_top_img[top_min_pix_h:top_min_pix_h+top_img.shape[0], top_min_pix_w:top_min_pix_w+top_img.shape[1]] = top_img 
+            ## 이미지 삽입 
+            total_top_img[top_min_pix_h:top_min_pix_h+top_img.shape[0], top_min_pix_w:top_min_pix_w+top_img.shape[1]] = top_img 
         
             # BOTTOM
             total_bottom_img = np.ones((total_h, total_w)) * 255
@@ -542,7 +542,7 @@ class Component:
             ## 이미지 삽입 
             total_bottom_img[bottom_min_pix_h:bottom_min_pix_h + bottom_img.shape[0], bottom_min_pix_w:bottom_min_pix_w + bottom_img.shape[1]] = bottom_img 
 
-            return None, total_bottom_img, None, bottom_img     # total_top_img, total_bottom_img, top_img, bottom_img
+            return total_bottom_img, bottom_img     
         
     def draw_mat(self, ax, layer, shift_x=0, shift_y=0, color='k'): 
         if layer == 'TOP':
