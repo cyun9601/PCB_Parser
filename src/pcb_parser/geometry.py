@@ -6,16 +6,9 @@ from .abs import Object
 import math
 import numpy as np 
 from typing import Union  
-<<<<<<< HEAD
 import cv2
 from .utils import floodfill
  
-=======
-import cv2 
-
-
-
->>>>>>> hjwon
 class Point(Object):
     def __init__(self, x, y):
         self.x = x 
@@ -153,11 +146,7 @@ class Line(Curve):
     def length(self):
         return math.sqrt((self.end.x - self.start.x) ** 2 + (self.end.y - self.start.y) ** 2)
 
-<<<<<<< HEAD
-    def draw_mat(self, ax, shift_x:0, shift_y:0, color='k'):
-=======
     def draw_mat(self, ax, shift_x:float=0, shift_y:float=0, color='k'):
->>>>>>> hjwon
         moved_ = self.move(shift_x, shift_y)
         l = Line2D([moved_.start.x, moved_.end.x], [moved_.start.y, moved_.end.y], color=color)
         ax.add_line(l)
@@ -246,11 +235,7 @@ class Arc(Curve):
     def h(self):
         raise NotImplementedError
             
-<<<<<<< HEAD
     def draw_mat(self, ax, shift_x=0, shift_y=0, bbox=False, color='k'):
-=======
-    def draw_mat(self, ax, shift_x=0, shift_y=0, color='k'):
->>>>>>> hjwon
         center = self.move(shift_x, shift_y).center
         width = self.radius * 2
         height = self.radius * 2
@@ -265,11 +250,8 @@ class Arc(Curve):
         
         ax.add_patch(mpl_Arc(center.to_tuple(), width, height, angle, theta1, theta2, color=color))
         
-<<<<<<< HEAD
         if bbox:
             ax.add_patch(mpl_Rect((self.min_x, self.min_y), self.w, self.h, color=color))
-=======
->>>>>>> hjwon
         
     def move(self, x, y, inplace = False) -> 'Arc':
         if inplace == False: 
@@ -390,7 +372,6 @@ class Polygon(Object):
         for arc in self.arcs:
             arc.draw_mat(ax, shift_x, shift_y, color=color)
     
-<<<<<<< HEAD
     def draw_cv(self, resolution=0.05, img:np.array=None) -> np.array:
         
         '''
@@ -457,22 +438,6 @@ class Polygon(Object):
         # self.cv_img = floodfill(self.cv_img)
         return self.cv_img
         
-=======
-    #def draw_cv(self, arr, color=None):
-        #line에서 가장 작은 값을 뽑기    
-        #min(#for line in self.lines:
-        #    arr = line.draw_cv(arr)
-            
-            
-            
-        #for arc in self.arcs:
-            #arr = arc.draw_cv(arr)
-            
-            
-            
-    #    return arr
-    
->>>>>>> hjwon
     def move(self, x, y, inplace=False) -> 'Polygon':
         if inplace:
             self.lines = [line.move(x, y, inplace) for line in self.lines]
@@ -501,7 +466,6 @@ class Polygon(Object):
         return line_list, arc_list
     
 class Component:
-<<<<<<< HEAD
     def __init__(self, data:dict) -> None:
         
         if type(data) == dict: 
@@ -581,51 +545,6 @@ class Component:
             return None, total_bottom_img, None, bottom_img     # total_top_img, total_bottom_img, top_img, bottom_img
         
     def draw_mat(self, ax, layer, shift_x=0, shift_y=0, color='k'): 
-=======
-    def __init__(self, component_info:dict) -> None:
-        self.part_number = int(component_info['PartNo'])
-        self.name = component_info['Name']
-        self.placed_layer = component_info['PlacedLayer']
-        self.center = Point(float(component_info['X']), float(component_info['Y'])) 
-        self.angle = float(component_info['Angle'])
-        self.ecad_angle = float(component_info['ECADAngle'])
-        self.pin_num = int(component_info['Pin_Num'])
-        self.height = float(component_info['Height']) if component_info['Height'] != None else None
-        self.part_name = component_info['PartName']
-        self.ecad_part_name = component_info['ECADPartName']
-        self.package_name = component_info['PackageName']
-        self.top_area = Polygon(component_info['CompArea_Top']).move(self.center.x, self.center.y) #중심축에서
-        self.bottom_area = Polygon(component_info['CompArea_Bottom']).move(self.center.x, self.center.y)
-        self.top_prohibit_area = Polygon(component_info['CompProhibitArea_Top']).move(self.center.x, self.center.y)
-        self.bottom_prohibit_area = Polygon(component_info['CompProhibitArea_Bottom']).move(self.center.x, self.center.y)
-        self.hole_area = Polygon(component_info['HoleArea']).move(self.center.x, self.center.y)
-        self.pin_dict = component_info['PinDict']
-        self.fixed = component_info['Fixed']
-        self.group = component_info['Group']
-        # self.outline_img = self.get_outline_img() # Outline
-        #self.cv_image = [ if component_info(['CompArea_Top']]np.zeros((int(round(self.height/0.005,0)),int(round(self.w/0.005,0)),3), dtype=np.uint8) #list [앞 , 뒤]
-        #p_h = int((self.top_area + self.bottom_area).h/0.005)
-        #p_w = int((self.top_area + self.bottom_area).w/0.005)
-        #arr = np.ones((p_h,p_w,3), dtype=np.uint8)*255    
-        #self.cv_image = [self.top_area.draw_cv(arr), self.bottom_area.draw_cv(arr)]
-        
-        #폴리곤 draw_cv 메소드 (self,arr, 최소픽셀단위)
-
-    #def _draw_cv(self):
-    #    p_h = int(round((self.top_area + self.bottom_area).h/0.005),0)
-    #    p_w = int(round((self.top_area + self.bottom_area).w/0.005),0)
-    #    arr = np.ones((p_h,p_w,3), dtype=np.uint8)*255    
-    #    area = self.top_area+self.bottom_area
-    #    bbox_x , = self.bounding_box
-        
-        
-    #    return  
-        
-    
-    
-    
-    def draw(self, ax, layer, shift_x=0, shift_y=0, color='k'): 
->>>>>>> hjwon
         if layer == 'TOP':
             self.top_area.draw_mat(ax, shift_x=shift_x, shift_y=shift_y, color=color)
         elif layer == 'BOTTOM':
