@@ -1,5 +1,6 @@
 from abc import *
 from matplotlib.patches import Arc as mpl_Arc
+from matplotlib.patches import Rectangle as mpl_Rect
 from matplotlib.lines import Line2D
 from .abs import Object
 import math
@@ -61,6 +62,12 @@ class Point(Object):
     
     def __sub__(self, other) -> 'Point':
         return Point(self.x - other.x, self.y - other.y)
+    
+    def __eq__(self, other) -> bool:
+        if self.x == other.x and self.y == other.y:
+            return True  
+        else: 
+            return False
     
     def __truediv__(self, other) -> 'Point':
         if type(other) in [int, float]: 
@@ -193,30 +200,32 @@ class Arc(Curve):
             
     def __repr__(self) -> str:
         return f'Arc({self.start}, {self.end})'
-            
+           
     @property 
     def min_x(self): 
-        x_min, y_min, x_max, y_max = self.get_extents().bounds
-        return x_min
+        min_x, max_x, min_y, max_y = self.bounding_box
+        return min_x
     
     @property 
     def max_x(self): 
-        x_min, y_min, x_max, y_max = self.get_extents().bounds
-        return x_max
+        min_x, max_x, min_y, max_y = self.bounding_box
+        return max_x
     
     @property 
     def min_y(self): 
-        x_min, y_min, x_max, y_max = self.get_extents().bounds
-        return y_min
+        min_x, max_x, min_y, max_y = self.bounding_box
+        return min_y
     
     @property 
     def max_y(self): 
-        x_min, y_min, x_max, y_max = self.get_extents().bounds
-        return y_max
+        min_x, max_x, min_y, max_y = self.bounding_box
+        return max_y
     
     @property
     def bounding_box(self):
-        return self.min_x, self.max_x, self.min_y, self.max_y
+        x = [i.x for i in self.ext_points()] 
+        y = [i.y for i in self.ext_points()]
+        return min(x), max(x), min(y), max(y)
     
     @property
     def w(self):
@@ -226,7 +235,7 @@ class Arc(Curve):
     def h(self):
         raise NotImplementedError
             
-    def draw_mat(self, ax, shift_x=0, shift_y=0, color='k'):
+    def draw_mat(self, ax, shift_x=0, shift_y=0, bbox=False, color='k'):
         center = self.move(shift_x, shift_y).center
         width = self.radius * 2
         height = self.radius * 2
@@ -241,6 +250,9 @@ class Arc(Curve):
         
         ax.add_patch(mpl_Arc(center.to_tuple(), width, height, angle, theta1, theta2, color=color))
         
+        if bbox:
+            ax.add_patch(mpl_Rect((self.min_x, self.min_y), self.w, self.h, color=color))
+        
     def move(self, x, y, inplace = False) -> 'Arc':
         if inplace == False: 
             return self.copy().move(x, y, inplace = True) # Point(self.centerX + shift[0], self.centerY + shift[1])
@@ -254,20 +266,37 @@ class Arc(Curve):
     def move_to(self) -> 'Arc':
         raise NotImplementedError    
     
-    def ext_points(self, delta = 0.1) -> list[Point]:
-        if self.sAngle > self.eAngle:
-            self.sAngle, self.eAngle = self.eAngle, self.sAngle
-            
+    def ext_points(self, delta = 0.05) -> list[Point]:
         points = []
-        cur_angle = self.sAngle
-        while cur_angle <= self.eAngle: 
-            angle_rad = math.radians(cur_angle)
-            x = self.center.x + self.radius * math.cos(angle_rad)
-            y = self.center.y + self.radius * math.sin(angle_rad)
-            points.append(Point(x, y))
-            cur_angle += delta            
-        return points
-    
+            
+        if self.direction == 'CCW': 
+            sAngle, eAngle = self.eAngle, self.sAngle
+            if eAngle > sAngle: 
+                eAngle -= 360
+            
+            cur_angle = sAngle 
+            while cur_angle >= eAngle: 
+                angle_rad = math.radians(cur_angle)
+                x = self.center.x + self.radius * math.cos(angle_rad)
+                y = self.center.y + self.radius * math.sin(angle_rad)
+                points.append(Point(x, y))
+                cur_angle -= delta
+            return points
+                
+        elif self.direction == 'CW' or None: 
+            sAngle, eAngle = self.sAngle, self.eAngle
+            if eAngle > sAngle: 
+                eAngle -= 360
+            
+            cur_angle = sAngle
+            while cur_angle >= eAngle:
+                angle_rad = math.radians(cur_angle)
+                x = self.center.x + self.radius * math.cos(angle_rad)
+                y = self.center.y + self.radius * math.sin(angle_rad)
+                points.append(Point(x, y))
+                cur_angle -= delta
+            return points
+        
     @property
     def center(self):
         return Point(self.centerX, self.centerY)
@@ -281,14 +310,6 @@ class Polygon(Object):
         
     def __len__(self):
         return len(self.lines) + len(self.arcs)
-    
-    # def _object_checker(func): # decorator 
-    #     def wrapper(self):
-    #         if self.__len__() > 0: 
-    #             return func
-    #         else:
-    #             return None 
-    #     return wrapper
 
     def __add__(self, other):
         return Polygon([self.lines + other.lines, self.arcs + other.arcs])
@@ -296,34 +317,42 @@ class Polygon(Object):
     @property 
     def min_x(self):
         if self.__len__() > 0:
-            return min([line.min_x for line in self.lines])
+            line_min_x = min([line.min_x for line in self.lines])
+            arc_min_x = min([arc.min_x for arc in self.arcs])
+            return min(line_min_x, arc_min_x)
         else: 
             return None 
     
     @property 
     def max_x(self):
         if self.__len__() > 0:
-            return max([line.max_x for line in self.lines])
+            line_max_x = max([line.max_x for line in self.lines])
+            arc_max_x = max([arc.max_x for arc in self.arcs])
+            return max(line_max_x, arc_max_x)
         else: 
             return None 
     
     @property 
     def min_y(self):
         if self.__len__() > 0:
-            return min([line.min_y for line in self.lines])
+            line_min_y = min([line.min_y for line in self.lines])
+            arc_min_y = min([arc.min_y for arc in self.arcs])
+            return min(line_min_y, arc_min_y)
         else:
             return None 
     
     @property 
     def max_y(self):
         if self.__len__() > 0:
-            return max([line.max_y for line in self.lines])
+            line_max_y = max([line.max_y for line in self.lines])
+            arc_max_y = max([arc.max_y for arc in self.arcs])
+            return max(line_max_y, arc_max_y)
         else: 
             return None 
     
     @property 
     def center(self) -> 'Point':
-        return Point((self.min_x + self.max_x), (self.min_y + self.max_y))
+        return Point((self.min_x + self.max_x) / 2, (self.min_y + self.max_y) / 2)
     
     @property
     def bounding_box(self):
@@ -363,25 +392,50 @@ class Polygon(Object):
             # 원점으로 이동 
             polygon = self.move(-self.min_x, -self.min_y)
 
-            h = int(round(polygon.h / resolution, 0))
-            w = int(round(polygon.w / resolution, 0))
-            img = np.ones((w, h)) * 255
+            h = int(round(polygon.h / resolution, 0)) + 1 
+            w = int(round(polygon.w / resolution, 0)) + 1
+            img = np.ones((h, w)) * 255
             img = img.astype(np.uint8)
         else: 
             polygon = self.copy()
 
         # Draw line 
         for line in polygon.lines:
-            start_x = int(round(line.start.x / resolution))
-            start_y = int(round(line.start.y / resolution))
-            end_x = int(round(line.end.x / resolution))
-            end_y = int(round(line.end.y / resolution))        
-            img = cv2.line(img, (start_x, h-start_y), (end_x, h-end_y), color = (0, 0, 0), thickness=1)
+            start_x = int(round(line.start.x / resolution, 0))
+            start_y = h - 1 - int(round(line.start.y / resolution, 0))
+            end_x = int(round(line.end.x / resolution, 0))
+            end_y = h - 1 - int(round(line.end.y / resolution, 0))        
+            img = cv2.line(img, (start_x, start_y), (end_x, end_y), color = (0, 0, 0), thickness=1)
 
         # Draw arc
+        for arc in polygon.arcs:
+            centerX = int(round(arc.centerX / resolution, 0))
+            centerY = h - 1 - int(round(arc.centerY / resolution, 0))
+            radius = int(round(arc.radius / resolution, 0))
+            
+            if arc.start == arc.end:
+                theta1 = 0
+                theta2 = 360
+            elif arc.direction == 'CW' or arc.direction == None:
+                theta1 = arc.sAngle
+                theta2 = arc.eAngle
+            elif arc.direction == 'CCW':
+                theta1 = 360 - arc.eAngle
+                theta2 = 360 - arc.sAngle
+                if theta1 > theta2:
+                    theta2 = theta2 + 360
+            
+            img = cv2.ellipse(img,
+                              center = (centerX, centerY),
+                              axes = (radius, radius),
+                              angle = 0,
+                              startAngle = theta1,
+                              endAngle = theta2,
+                              color = (0, 0, 0),
+                              thickness = 1)
         
         self.cv_img = img
-        self.cv_img = floodfill(self.cv_img)
+        # self.cv_img = floodfill(self.cv_img)
         return self.cv_img
         
     def move(self, x, y, inplace=False) -> 'Polygon':
@@ -427,7 +481,7 @@ class Component:
             self.ecad_part_name = data['ECADPartName']
             self.package_name = data['PackageName']
             self.top_area = Polygon(data['CompArea_Top']).move(self.center.x, self.center.y)
-            self.bottom_area = Polygon(data['CompArea_Bottom']).move(self.center.x, self.center.y)
+            self.bottom_area = Polygon(data['CompArea_Bottom']) # .move(self.center.x, self.center.y)
             self.top_prohibit_area = Polygon(data['CompProhibitArea_Top']).move(self.center.x, self.center.y)
             self.bottom_prohibit_area = Polygon(data['CompProhibitArea_Bottom']).move(self.center.x, self.center.y)
             self.hole_area = Polygon(data['HoleArea']).move(self.center.x, self.center.y)
@@ -438,22 +492,58 @@ class Component:
         else : 
             NotImplementedError
 
-    def draw_cv(self, resolution:float=0.05, img:np.array=None) -> tuple(np.array, np.array):
+    def draw_cv(self, resolution:float=0.05, img:np.array=None) -> tuple[np.array, np.array]:
         if img == None: 
             
-            h = int(round((self.top_area + self.bottom_area).h / resolution, 0))
-            w = int(round((self.top_area + self.bottom_area).w / resolution, 0))
-            img = np.ones((w, h)) * 255
-            img = img.astype(np.uint8)
+            total_area = self.top_area + self.bottom_area
+            
+            total_h = int(round(total_area.h / resolution, 0)) + 1
+            total_w = int(round(total_area.w / resolution, 0)) + 1
+            
+            # # TOP
+            # total_top_img = np.ones((total_h, total_w)) * 255
+            # total_top_img = total_top_img.astype(np.uint8)
 
-            top_img = self.top_area.draw_cv(resolution=resolution)
+            # top_img = self.top_area.draw_cv(resolution)
+            
+            # ## Component의 원점 매핑 시 BBox 계산. 
+            # top_moved_min_x = self.top_area.min_x - total_area.min_x
+            # top_moved_max_x = self.top_area.max_x - total_area.min_x
+            # top_moved_min_y = self.top_area.min_y - total_area.min_y 
+            # top_moved_max_y = self.top_area.max_y - total_area.min_y 
+            
+            # ## Pixel 영역에서의 BBox 영역 매핑 
+            # top_min_pix_h = total_h - 1 - int(round((top_moved_max_y / resolution), 0))
+            # top_max_pix_h = total_h - 1 - int(round((top_moved_min_y / resolution), 0))
+            # top_min_pix_w = int(round((top_moved_min_x / resolution), 0))
+            # top_max_pix_w = int(round((top_moved_max_x / resolution), 0))
+            
+            # ## 이미지 삽입 
+            # total_top_img[top_min_pix_h:top_min_pix_h+top_img.shape[0], top_min_pix_w:top_min_pix_w+top_img.shape[1]] = top_img 
+        
+            # BOTTOM
+            total_bottom_img = np.ones((total_h, total_w)) * 255
+            total_bottom_img = total_bottom_img.astype(np.uint8)
+            
             bottom_img = self.bottom_area.draw_cv(resolution)
             
-            img[:, :] = top_img 
+            ## Component의 원점 매핑 시 BBox 계산.
+            bottom_moved_min_x = self.bottom_area.min_x - total_area.min_x
+            bottom_moved_max_x = self.bottom_area.max_x - total_area.min_x
+            bottom_moved_min_y = self.bottom_area.min_y - total_area.min_y 
+            bottom_moved_max_y = self.bottom_area.max_y - total_area.min_y 
+        
+            ## Pixel 영역에서의 BBox 영역 매핑 
+            bottom_min_pix_h = total_h - 1 - int(round((bottom_moved_max_y / resolution), 0))
+            bottom_max_pix_h = total_h - 1 - int(round((bottom_moved_min_y / resolution), 0))
+            bottom_min_pix_w = int(round((bottom_moved_min_x / resolution), 0))
+            bottom_max_pix_w = int(round((bottom_moved_max_x / resolution), 0))
             
-            
-            
+            ## 이미지 삽입 
+            total_bottom_img[bottom_min_pix_h:bottom_min_pix_h + bottom_img.shape[0], bottom_min_pix_w:bottom_min_pix_w + bottom_img.shape[1]] = bottom_img 
 
+            return None, total_bottom_img, None, bottom_img     # total_top_img, total_bottom_img, top_img, bottom_img
+        
     def draw_mat(self, ax, layer, shift_x=0, shift_y=0, color='k'): 
         if layer == 'TOP':
             self.top_area.draw_mat(ax, shift_x=shift_x, shift_y=shift_y, color=color)
