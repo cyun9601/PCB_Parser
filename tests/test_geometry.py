@@ -1,3 +1,7 @@
+#%%
+import sys 
+sys.path.append('/VOLUME/PNR/hjwon/PCB_Parser/src/')
+
 from pcb_parser.geometry import Point, Line, Arc, Polygon, Component
 import os 
 import json
@@ -5,11 +9,12 @@ import cv2
 import matplotlib.pyplot as plt  
 import numpy as np 
 
+#%%
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-with open("../data/sample_data.json", 'r') as f:
+with open("/VOLUME/PNR/data/sample_data.json", 'r') as f:
     data = json.load(f)
-
+#%%
 # Point 
 ## 객체 생성 
 p1 = Point(10, 20)
@@ -48,6 +53,8 @@ print("moved: ", moved)
 l1.move(10.5, -10) # inplace = True)
 print("l1: ", l1)
 
+
+##
 # Arc 
 ## 객체 생성 
 p1 = Point(1, 0)
