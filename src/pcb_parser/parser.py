@@ -27,8 +27,7 @@ class PCB:
         self.board.draw_mat(ax, shift_x=shift_x, shift_y=shift_y, color=color)
         self.hole_area.draw_mat(ax, shift_x=shift_x, shift_y=shift_y, color=color)
         
-        # draw components.
-        
+        # draw components
         for _, v in self.components_dict.items():
             # if v.placed_layer == layer and (not only_fixed or v.fixed):
             v.draw_mat(ax, layer, shift_x=shift_x, shift_y=shift_y, color=color)
@@ -42,7 +41,6 @@ class PCB:
         if save:
             plt.savefig(dpi=dpi, fname=image_name)
         return fig, ax
-    
     
     #def draw_cv(self):
         '''

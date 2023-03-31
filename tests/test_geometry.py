@@ -79,6 +79,11 @@ arc4 = Arc(
             sAngle = 207.81, 
             eAngle = 332.18, direction = 'CW', centerX = 4, centerY = 0)
 
+arc5 = Arc(
+            [Point(4.75, 0), Point(4.75, 0)], 
+            radius = 0.75, 
+            sAngle = 0, 
+            eAngle = 360, direction = 'CW', centerX = 4, centerY = 0)
 
 points = arc3.ext_points()
 arc_x_list = [t.x for t in points]
@@ -125,6 +130,9 @@ print("arc3 bbox: ", min_x, max_x, min_y, max_y)
 
 min_x, max_x, min_y, max_y = arc4.bounding_box
 print("arc4 bbox: ", min_x, max_x, min_y, max_y)
+
+min_x, max_x, min_y, max_y = arc5.bounding_box
+print("arc5 bbox: ", min_x, max_x, min_y, max_y)
 
 
 # Polygon

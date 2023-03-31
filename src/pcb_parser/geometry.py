@@ -8,6 +8,7 @@ import numpy as np
 from typing import Union  
 import cv2
 from .utils import floodfill
+import copy 
  
 class Point(Object):
     def __init__(self, x, y):
@@ -198,6 +199,10 @@ class Arc(Curve):
             self.centerX = float(kwargs['centerX']) 
             self.centerY = float(kwargs['centerY'])
             
+        if self.start == self.end: 
+            self.sAngle = 0.0
+            self.eAngle = 360.0
+  
     def __repr__(self) -> str:
         return f'Arc({self.start}, {self.end})'
            
@@ -270,9 +275,13 @@ class Arc(Curve):
         points = []
             
         if self.direction == 'CCW': 
-            sAngle, eAngle = self.eAngle, self.sAngle
-            if eAngle > sAngle: 
-                eAngle -= 360
+            if self.start == self.end: 
+                sAngle = 360
+                eAngle = 0
+            else:
+                sAngle, eAngle = self.eAngle, self.sAngle
+                if eAngle > sAngle: 
+                    eAngle -= 360
             
             cur_angle = sAngle 
             while cur_angle >= eAngle: 
@@ -284,9 +293,13 @@ class Arc(Curve):
             return points
                 
         elif self.direction == 'CW' or None: 
-            sAngle, eAngle = self.sAngle, self.eAngle
-            if eAngle > sAngle: 
-                eAngle -= 360
+            if self.start == self.end : 
+                sAngle = 360
+                eAngle = 0
+            else: 
+                sAngle, eAngle = self.sAngle, self.eAngle
+                if eAngle > sAngle: 
+                    eAngle -= 360
             
             cur_angle = sAngle
             while cur_angle >= eAngle:
@@ -316,37 +329,41 @@ class Polygon(Object):
         
     @property 
     def min_x(self):
-        if self.__len__() > 0:
-            line_min_x = min([line.min_x for line in self.lines])
-            arc_min_x = min([arc.min_x for arc in self.arcs])
-            return min(line_min_x, arc_min_x)
+        obj = []
+        if len(self) > 0:
+            [obj.append(line.min_x) for line in self.lines]
+            [obj.append(arc.min_x) for arc in self.arcs]
+            return min(obj)
         else: 
             return None 
     
     @property 
     def max_x(self):
-        if self.__len__() > 0:
-            line_max_x = max([line.max_x for line in self.lines])
-            arc_max_x = max([arc.max_x for arc in self.arcs])
-            return max(line_max_x, arc_max_x)
+        obj = []
+        if len(self) > 0:
+            [obj.append(line.max_x) for line in self.lines]
+            [obj.append(arc.max_x) for arc in self.arcs]
+            return max(obj)
         else: 
             return None 
     
     @property 
     def min_y(self):
-        if self.__len__() > 0:
-            line_min_y = min([line.min_y for line in self.lines])
-            arc_min_y = min([arc.min_y for arc in self.arcs])
-            return min(line_min_y, arc_min_y)
+        obj = []
+        if len(self) > 0:
+            [obj.append(line.min_y) for line in self.lines]
+            [obj.append(arc.min_y) for arc in self.arcs]
+            return min(obj)
         else:
             return None 
     
     @property 
     def max_y(self):
-        if self.__len__() > 0:
-            line_max_y = max([line.max_y for line in self.lines])
-            arc_max_y = max([arc.max_y for arc in self.arcs])
-            return max(line_max_y, arc_max_y)
+        obj = []
+        if len(self) > 0:
+            [obj.append(line.max_y) for line in self.lines]
+            [obj.append(arc.max_y) for arc in self.arcs]
+            return max(obj)
         else: 
             return None 
     
@@ -372,40 +389,42 @@ class Polygon(Object):
         for arc in self.arcs:
             arc.draw_mat(ax, shift_x, shift_y, color=color)
     
-    def draw_cv(self, resolution=0.05, img:np.array=None) -> np.array:
+    def draw_cv(self, resolution=0.05, fill='in') -> np.array:
         
-        '''
+        """
         Shape 의 cv 
         
         - Input -
         img: None일 때는 부품의 크기에 맞는 이미지 생성 
+        fill: 'in', 'out'
         
         - Output -
+        """
         
-        '''
-        
-        # Line 과 Arc 속성이 존재하지 않으면 None 반환 
+        # Line 과 Arc가 존재하지 않으면 None 반환 
         if len(self) == 0: 
             return None 
         
-        if img == None: 
-            # 원점으로 이동 
-            polygon = self.move(-self.min_x, -self.min_y)
+        # 기존에 그린게 있으면 해당 값을 반환
+        if 'self.cv_img' in locals(): 
+            if (self.cv_resolution == resolution) & (self.cv_fill == fill):
+                return self.cv_img
+        
+        # 원점으로 이동 
+        polygon = self.move(-self.min_x, -self.min_y)
 
-            h = int(round(polygon.h / resolution, 0)) + 1 
-            w = int(round(polygon.w / resolution, 0)) + 1
-            img = np.ones((h, w)) * 255
-            img = img.astype(np.uint8)
-        else: 
-            polygon = self.copy()
-
+        h = int(round(polygon.h / resolution, 0)) + 1 
+        w = int(round(polygon.w / resolution, 0)) + 1
+        polygon_img = np.ones((h, w)) * 255
+        polygon_img = polygon_img.astype(np.uint8)
+            
         # Draw line 
         for line in polygon.lines:
             start_x = int(round(line.start.x / resolution, 0))
             start_y = h - 1 - int(round(line.start.y / resolution, 0))
             end_x = int(round(line.end.x / resolution, 0))
             end_y = h - 1 - int(round(line.end.y / resolution, 0))        
-            img = cv2.line(img, (start_x, start_y), (end_x, end_y), color = (0, 0, 0), thickness=1)
+            polygon_img = cv2.line(polygon_img, (start_x, start_y), (end_x, end_y), color = (0, 0, 0), thickness=1)
 
         # Draw arc
         for arc in polygon.arcs:
@@ -417,15 +436,17 @@ class Polygon(Object):
                 theta1 = 0
                 theta2 = 360
             elif arc.direction == 'CW' or arc.direction == None:
-                theta1 = arc.sAngle
-                theta2 = arc.eAngle
+                theta1 = 360 - arc.sAngle
+                theta2 = 360 - arc.eAngle
+                if theta1 > theta2: 
+                    theta2 = theta2 + 360
             elif arc.direction == 'CCW':
                 theta1 = 360 - arc.eAngle
                 theta2 = 360 - arc.sAngle
                 if theta1 > theta2:
                     theta2 = theta2 + 360
             
-            img = cv2.ellipse(img,
+            polygon_img = cv2.ellipse(polygon_img,
                               center = (centerX, centerY),
                               axes = (radius, radius),
                               angle = 0,
@@ -434,8 +455,13 @@ class Polygon(Object):
                               color = (0, 0, 0),
                               thickness = 1)
         
-        self.cv_img = img
-        # self.cv_img = floodfill(self.cv_img)
+        # Polygon floodfill
+        if fill:
+            polygon_img = floodfill(polygon_img, fill_area=fill)
+
+        self.cv_resolution = resolution
+        self.cv_fill = fill 
+        self.cv_img = polygon_img
         return self.cv_img
         
     def move(self, x, y, inplace=False) -> 'Polygon':
@@ -489,7 +515,7 @@ class Component:
             self.fixed = data['Fixed']
             self.group = data['Group']
             # self.outline_img = self.get_outline_img() # Outline
-        else : 
+        else:
             NotImplementedError
 
     def draw_cv(self, resolution:float=0.05, img:np.array=None) -> tuple[np.array, np.array]:
@@ -551,7 +577,6 @@ class Component:
             self.bottom_area.draw_mat(ax, shift_x=shift_x, shift_y=shift_y, color=color)
         self.hole_area.draw_mat(ax, shift_x=shift_x, shift_y=shift_y, color=color)
 
-
     def move(self, x, y):
         raise NotImplementedError
         
@@ -581,3 +606,31 @@ class Component:
     # def get_outline_img(self):
         # img = np.zeros()
         # pass
+        
+        
+def merge_polygon(base_img:np.array, background:Polygon, foreground:Polygon, resolution = 0.05, inplace = False) -> np.array:
+    if inplace == False:
+        base_img = copy.deepcopy(base_img)
+    
+    back_pix_h = int(round(background.h / resolution, 0)) + 1
+    back_pix_w = int(round(background.w / resolution, 0)) + 1
+    
+    ## Component의 원점 매핑 시 BBox 계산. 
+    moved_min_x = foreground.min_x - background.min_x
+    moved_max_x = foreground.max_x - background.min_x
+    moved_min_y = foreground.min_y - background.min_y 
+    moved_max_y = foreground.max_y - background.min_y 
+
+    ## Pixel 영역에서의 BBox 영역 매핑 
+    min_pix_h = back_pix_h - 1 - int(round((moved_max_y / resolution), 0))
+    max_pix_h = back_pix_h - 1 - int(round((moved_min_y / resolution), 0))
+    min_pix_w = int(round((moved_min_x / resolution), 0))
+    max_pix_w = int(round((moved_max_x / resolution), 0))
+
+    ## 이미지 삽입 
+    if base_img[min_pix_h:min_pix_h+foreground.cv_img.shape[0], min_pix_w:min_pix_w+foreground.cv_img.shape[1]].all == 255 :
+        collision = True
+    else:
+        collision = False
+    base_img[min_pix_h:min_pix_h+foreground.cv_img.shape[0], min_pix_w:min_pix_w+foreground.cv_img.shape[1]] = foreground.cv_img 
+    return base_img, collision
