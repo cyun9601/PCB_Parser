@@ -507,68 +507,77 @@ class Component:
             self.ecad_part_name = data['ECADPartName']
             self.package_name = data['PackageName']
             self.top_area = Polygon(data['CompArea_Top']).move(self.center.x, self.center.y)
-            self.bottom_area = Polygon(data['CompArea_Bottom']) # .move(self.center.x, self.center.y)
+            self.bottom_area = Polygon(data['CompArea_Bottom']).move(self.center.x, self.center.y)
             self.top_prohibit_area = Polygon(data['CompProhibitArea_Top']).move(self.center.x, self.center.y)
             self.bottom_prohibit_area = Polygon(data['CompProhibitArea_Bottom']).move(self.center.x, self.center.y)
             self.hole_area = Polygon(data['HoleArea']).move(self.center.x, self.center.y)
             self.pin_dict = data['PinDict']
             self.fixed = data['Fixed']
             self.group = data['Group']
-            # self.outline_img = self.get_outline_img() # Outline
         else:
             NotImplementedError
 
-    def draw_cv(self, resolution:float=0.05, img:np.array=None) -> tuple[np.array, np.array]:
-        if img == None: 
-            
-            total_area = self.top_area + self.bottom_area
-            
-            total_h = int(round(total_area.h / resolution, 0)) + 1
-            total_w = int(round(total_area.w / resolution, 0)) + 1
-            
-            # TOP
-            total_top_img = np.ones((total_h, total_w)) * 255
-            total_top_img = total_top_img.astype(np.uint8)
-
-            top_img = self.top_area.draw_cv(resolution)
-            
-            ## Component의 원점 매핑 시 BBox 계산. 
-            top_moved_min_x = self.top_area.min_x - total_area.min_x
-            top_moved_max_x = self.top_area.max_x - total_area.min_x
-            top_moved_min_y = self.top_area.min_y - total_area.min_y 
-            top_moved_max_y = self.top_area.max_y - total_area.min_y 
-            
-            ## Pixel 영역에서의 BBox 영역 매핑 
-            top_min_pix_h = total_h - 1 - int(round((top_moved_max_y / resolution), 0))
-            top_max_pix_h = total_h - 1 - int(round((top_moved_min_y / resolution), 0))
-            top_min_pix_w = int(round((top_moved_min_x / resolution), 0))
-            top_max_pix_w = int(round((top_moved_max_x / resolution), 0))
-            
-            ## 이미지 삽입 
-            total_top_img[top_min_pix_h:top_min_pix_h+top_img.shape[0], top_min_pix_w:top_min_pix_w+top_img.shape[1]] = top_img 
+    def draw_cv(self, resolution:float=0.05, fill='in') -> tuple[np.array, np.array]:
+        # 기존에 그린게 있으면 해당 값을 반환
+        if 'self.cv_top_img' in locals(): 
+            if (self.cv_resolution == resolution) & (self.cv_fill == fill):
+                return self.cv_top_img
+        if 'self.cv_bottom_img' in locals(): 
+            if (self.cv_resolution == resolution) & (self.cv_fill == fill):
+                return self.cv_bottom_img
         
-            # BOTTOM
-            total_bottom_img = np.ones((total_h, total_w)) * 255
-            total_bottom_img = total_bottom_img.astype(np.uint8)
-            
-            bottom_img = self.bottom_area.draw_cv(resolution)
-            
-            ## Component의 원점 매핑 시 BBox 계산.
-            bottom_moved_min_x = self.bottom_area.min_x - total_area.min_x
-            bottom_moved_max_x = self.bottom_area.max_x - total_area.min_x
-            bottom_moved_min_y = self.bottom_area.min_y - total_area.min_y 
-            bottom_moved_max_y = self.bottom_area.max_y - total_area.min_y 
+        total_area = self.top_area + self.bottom_area
         
-            ## Pixel 영역에서의 BBox 영역 매핑 
-            bottom_min_pix_h = total_h - 1 - int(round((bottom_moved_max_y / resolution), 0))
-            bottom_max_pix_h = total_h - 1 - int(round((bottom_moved_min_y / resolution), 0))
-            bottom_min_pix_w = int(round((bottom_moved_min_x / resolution), 0))
-            bottom_max_pix_w = int(round((bottom_moved_max_x / resolution), 0))
-            
-            ## 이미지 삽입 
-            total_bottom_img[bottom_min_pix_h:bottom_min_pix_h + bottom_img.shape[0], bottom_min_pix_w:bottom_min_pix_w + bottom_img.shape[1]] = bottom_img 
+        total_h = int(round(total_area.h / resolution, 0)) + 1
+        total_w = int(round(total_area.w / resolution, 0)) + 1
+        
+        # TOP
+        total_top_img = np.ones((total_h, total_w)) * 255
+        total_top_img = total_top_img.astype(np.uint8)
 
-            return total_bottom_img, bottom_img     
+        top_img = self.top_area.draw_cv(resolution)
+        
+        ## Component의 원점 매핑 시 BBox 계산. 
+        top_moved_min_x = self.top_area.min_x - total_area.min_x
+        top_moved_max_x = self.top_area.max_x - total_area.min_x
+        top_moved_min_y = self.top_area.min_y - total_area.min_y 
+        top_moved_max_y = self.top_area.max_y - total_area.min_y 
+        
+        ## Pixel 영역에서의 BBox 영역 매핑 
+        top_min_pix_h = total_h - 1 - int(round((top_moved_max_y / resolution), 0))
+        top_max_pix_h = total_h - 1 - int(round((top_moved_min_y / resolution), 0))
+        top_min_pix_w = int(round((top_moved_min_x / resolution), 0))
+        top_max_pix_w = int(round((top_moved_max_x / resolution), 0))
+        
+        ## 이미지 삽입 
+        total_top_img[top_min_pix_h:top_min_pix_h+top_img.shape[0], top_min_pix_w:top_min_pix_w+top_img.shape[1]] = top_img 
+    
+        # BOTTOM
+        total_bottom_img = np.ones((total_h, total_w)) * 255
+        total_bottom_img = total_bottom_img.astype(np.uint8)
+        
+        bottom_img = self.bottom_area.draw_cv(resolution)
+        
+        ## Component의 원점 매핑 시 BBox 계산.
+        bottom_moved_min_x = self.bottom_area.min_x - total_area.min_x
+        bottom_moved_max_x = self.bottom_area.max_x - total_area.min_x
+        bottom_moved_min_y = self.bottom_area.min_y - total_area.min_y 
+        bottom_moved_max_y = self.bottom_area.max_y - total_area.min_y 
+    
+        ## Pixel 영역에서의 BBox 영역 매핑 
+        bottom_min_pix_h = total_h - 1 - int(round((bottom_moved_max_y / resolution), 0))
+        bottom_max_pix_h = total_h - 1 - int(round((bottom_moved_min_y / resolution), 0))
+        bottom_min_pix_w = int(round((bottom_moved_min_x / resolution), 0))
+        bottom_max_pix_w = int(round((bottom_moved_max_x / resolution), 0))
+        
+        ## 이미지 삽입 
+        total_bottom_img[bottom_min_pix_h:bottom_min_pix_h + bottom_img.shape[0], bottom_min_pix_w:bottom_min_pix_w + bottom_img.shape[1]] = bottom_img 
+
+        self.cv_top_img = total_top_img    
+        self.cv_bottom_img = total_bottom_img   
+        self.cv_resolution = resolution
+        
+        return self.cv_top_img, self.cv_bottom_img     
         
     def draw_mat(self, ax, layer, shift_x=0, shift_y=0, color='k'): 
         if layer == 'TOP':
@@ -600,13 +609,41 @@ class Component:
         return (self.top_area + self.bottom_area).max_y
     
     @property
-    def get_size(self):
+    def bounding_box(self):
         return self.min_x, self.max_x, self.min_y, self.max_y
     
-    # def get_outline_img(self):
-        # img = np.zeros()
-        # pass
+    def get_cv_img_center(self, size:tuple, resolution:float = 0.05, fill:bool=True) -> np.array:
+        """
+        - Input -
+        size(tuple): Background 이미지의 크기(tuple)
+        resolution(float): 
         
+        - Output -
+        """
+        
+        top_img = np.ones(size) * 255
+        bottom_img = np.ones(size) * 255
+        
+        base_pix_h = top_img.shape[0]
+        base_pix_w = top_img.shape[1]
+        
+        if 'self.cv_top_img' not in locals():
+            self.cv_top_img, self.cv_bottom_img = self.draw_cv(resolution, fill)
+        comp_top_img, comp_bottom_img = self.cv_top_img, self.cv_bottom_img
+        
+        start_h = int(round(base_pix_h / 2 - (comp_top_img.shape[0] / 2), 0))
+        end_h = int(round(base_pix_h / 2 + (comp_top_img.shape[0] / 2), 0))
+        
+        start_w = int(round(base_pix_w / 2 - (comp_top_img.shape[1] / 2), 0))
+        end_w = int(round(base_pix_w / 2 + (comp_top_img.shape[1] / 2), 0))
+        
+        ## TOP 이미지 삽입
+        top_img[start_h:end_h, start_w:end_w] = comp_top_img 
+        
+        ## BOTTOM 이미지 삽입
+        bottom_img[start_h:end_h, start_w:end_w] = comp_bottom_img 
+        return top_img, bottom_img
+
         
 def merge_polygon(base_img:np.array, background:Polygon, foreground:Polygon, resolution = 0.05, inplace = False) -> np.array:
     if inplace == False:
@@ -628,7 +665,8 @@ def merge_polygon(base_img:np.array, background:Polygon, foreground:Polygon, res
     max_pix_w = int(round((moved_max_x / resolution), 0))
 
     ## 이미지 삽입 
-    if base_img[min_pix_h:min_pix_h+foreground.cv_img.shape[0], min_pix_w:min_pix_w+foreground.cv_img.shape[1]].all == 255 :
+    partial_base_img = base_img[min_pix_h:min_pix_h+foreground.cv_img.shape[0], min_pix_w:min_pix_w+foreground.cv_img.shape[1]]
+    if ((partial_base_img == 0) & (foreground.cv_img == 0)).sum() > 0: 
         collision = True
     else:
         collision = False

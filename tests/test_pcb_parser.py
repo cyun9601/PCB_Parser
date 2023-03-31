@@ -1,11 +1,13 @@
 import pcb_parser
 from pcb_parser import PCB
-from pcb_parser.geometry import Polygon, merge_polygon
+from pcb_parser.geometry import Polygon, Component, merge_polygon
 import os 
 import json
 import cv2 
 import matplotlib.pyplot as plt  
 import numpy as np 
+import copy 
+
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
@@ -22,10 +24,19 @@ bb = pcb.hole_area.draw_cv(fill='in') # img = board_img)
 
 rr, collision = merge_polygon(board_img, pcb.board, pcb.hole_area, resolution=0.05)
 print("collision: ", collision)
- 
-cv2.imshow('Board image', board_img)
-cv2.imshow('Hole', bb)
-cv2.imshow('sum', rr)
+
+component_name = '6630A90002C-BSBPBF-CN485_STRAIGHT'
+comp = pcb.components_dict[component_name]
+top, bottom = comp.draw_cv()
+front, back = comp.get_cv_img_center(size = board_img.shape, fill = False)
+
+# cv2.imshow('Board image', board_img)
+# cv2.imshow('Hole', bb)
+# cv2.imshow('sum', rr)
+cv2.imshow('t', top)
+cv2.imshow('b', bottom)
+cv2.imshow('front', front)
+cv2.imshow('back', back)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
