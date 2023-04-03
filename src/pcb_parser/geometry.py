@@ -58,6 +58,26 @@ class Point(Object):
     def center(self) -> 'Point':
         return self
     
+    def rotation(self, angle:float, center:'Point'=None, inplace:bool=False) -> 'Point':
+        if center is None: 
+            center = Point(0, 0)
+        
+        x = self.x - center.x
+        y = self.y - center.y
+        
+        x_new = x * math.cos(angle) - y * math.sin(angle)
+        y_new = x * math.sin(angle) + y * math.cos(angle)
+        
+        x_new += center.x
+        y_new += center.y
+        
+        if inplace == True : 
+            self.x = x_new
+            self.y = y_new
+            return self
+        else:
+            return Point(x_new, y_new)
+    
     def __add__(self, other) -> 'Point':
         return Point(self.x + other.x, self.y + other.y)
     

@@ -10,7 +10,7 @@ class Net: # dataclass
         self.pin_no = net_info['PinNo']
 
 class PCB:
-    def __init__(self, pcb_dict:json) -> None:
+    def __init__(self, pcb_dict:json, p_resolution:float=0.05) -> None:
         self.pcb_info = list(pcb_dict.values())[0]
         self.file_name = self.pcb_info['FileName']
         self.file_format = self.pcb_info['FileFormat']
@@ -19,6 +19,9 @@ class PCB:
         self.prohibit_area = Polygon(self.pcb_info['ProhibitArea'])
         self.components_dict = {comp_info['PartName']:Component(comp_info) for comp_info in self.pcb_info['ComponentDict'].values()}
         self.net_list = dict(zip(self.pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(self.pcb_info['NetDict'].values())]))
+    
+        print('Component 이미지 생성 중...')
+        [comp.draw_cv(resolution = p_resolution) for comp in self.components_area]
     
     def draw_mat(self, image_name:str, layer:str, only_fixed:bool=False, shift_x=0, shift_y=0, save=True, figsize=(10, 10), color='k', dpi:int=300) -> dict:
         fig = plt.figure(figsize=figsize, dpi=dpi)
