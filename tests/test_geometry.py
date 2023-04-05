@@ -146,25 +146,3 @@ cv_img = polygon.draw_cv(resolution=0.05)
 cv2.imshow('Color image', cv_img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-
-'''
-## Flood fill test
-component_name = 'SAA35069001-BF-MICOM'
-figsize = (pcb.components_dict[component_name].w * 0.0393701, pcb.components_dict[component_name].h * 0.0393701)
-# figsize = (10, 10)
-dpi = 300 
-
-fig = plt.figure(figsize=figsize, dpi=dpi)
-ax = fig.add_subplot(111)
-ax.xaxis.set_visible(False)
-ax.yaxis.set_visible(False)
-
-pcb.components_dict[component_name].draw(ax)
-
-# ax.set_title('a) valid')
-min_x, max_x, min_y, max_y = pcb.get_pcb_size
-ax.set_xlim([min_x, max_x])
-ax.set_ylim([min_y, max_y])
-ax.set_aspect('equal') #, 'box')
-plt.savefig(dpi=dpi, fname='result.png')
-'''

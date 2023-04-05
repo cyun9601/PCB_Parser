@@ -3,7 +3,8 @@ import numpy as np
 import copy 
 
 
-
+def img_rot_90(img, k):
+    return np.rot90(img, k=k)
 
 def floodfill(img:np.array, fill_area = 'in', fill_val = 100):
     ret, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
