@@ -600,7 +600,11 @@ class Component:
             NotImplementedError
 
         self.p_resolution = p_resolution
+
+        # Component 초기화 
+        # self.initialize()
         
+    def initialize(self) -> None:
         # unfixed component 에 대한 처리
         if self.fixed == False: 
             ## placed layer에 따라 스위칭
@@ -608,9 +612,9 @@ class Component:
                 self.switch_layer()
                 
             ## angle을 0으로 초기화
-            # self.rotation(-self.angle, inplace=True)
+            self.rotation(-self.angle, inplace=True)
             
-    def switch_layer(self):
+    def switch_layer(self) -> None:
         self.placed_layer = 'TOP' if self.placed_layer == 'BOTTOM' else 'BOTTOM'
         self.top_area, self.bottom_area = self.bottom_area, self.top_area
         self.top_prohibit_area, self.bottom_prohibit_area = self.bottom_prohibit_area, self.top_prohibit_area

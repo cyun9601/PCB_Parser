@@ -24,9 +24,15 @@ class PCB:
         self.components_dict = {comp_info['Name']:Component(comp_info, p_resolution) for comp_info in self.pcb_info['ComponentDict'].values()}
         self.net_list = dict(zip(self.pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(self.pcb_info['NetDict'].values())]))
         
-        # 초기화 
+        # 초기화
+        ## 초기 이미지 생성  
         self.initialize_cv_img()
+        
+        ## Background 초기화 -> self.state 생성  
         self.initialize_background()
+        
+        ## Component 초기화 
+        self.initialize_components()
     
     def initialize_cv_img(self):
         # initialize
@@ -45,6 +51,10 @@ class PCB:
 
         merged_img, collision = self.merge_polygon(board_cv_img, self.board, self.hole_area, inplace=False)
         self.state = [copy.deepcopy(merged_img), copy.deepcopy(merged_img)]
+        
+    def initialize_components(self):
+        for comp in self.components_dict.values():
+            comp.initialize()
         
     def get_fixed_components(self) -> list[str]:
         return [comp.name for comp in self.components_dict.values() if comp.fixed]

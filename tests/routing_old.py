@@ -99,9 +99,6 @@ def astar(array, start, goal):
                 heapq.heappush(heap, (priority, next_node))
                 came_from[next_node] = current
 
-        r
-
-
 
 
 import heapq
@@ -234,33 +231,3 @@ add_obstacle(graph, 'D1', {'D': 1})
 
 # 최단 경로 찾기
 print(shortest_path(graph, 'A', 'F'))
-
-# %%
-import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib.patches import Arc as mpl_Arc
-# 원점 (50,300), 반지름50, 회전0, 0도부터 360도 그리기
-fig = plt.figure(figsize=(10, 10), dpi=300)
-ax = fig.add_subplot(111)
-# 1
-ax.add_patch(mpl_Arc((4, 0), width = 0.75*2, height = 0.75*2, angle=0, theta1=0, theta2=360))
-# 2
-ax.add_patch(mpl_Arc((2, 0), width = 0.75*2, height = 0.75*2, angle=0, theta1=0, theta2=360))
-# 3
-ax.add_patch(mpl_Arc((0, 0), width = 0.75*2, height = 0.75*2, angle=0, theta1=0, theta2=360, color='r'))
-# 4
-ax.add_patch(mpl_Arc((-2, 0), width = 0.75*2, height = 0.75*2, angle=0, theta1=0, theta2=360, color='r'))
-# 5
-ax.add_patch(mpl_Arc((-4, 0), width = 0.75*2, height = 0.75*2, angle=0, theta1=0, theta2=360, color='r'))
-# 6
-#ax.add_patch(mpl_Arc((0, -1.5), width = 0.05*2, height = 0.05*2, angle=0, theta1=207.8185, theta2=332.1843, color='r'))
-# 7
-#ax.add_patch(mpl_Arc((-2, 0), width = 0.75*2, height = 0.75*2, angle=0, theta1=512.18140, theta2=387.8183218, color='r'))
-#ax.add_patch(mpl_Arc((-2, 0), width = 0.75*2, height = 0.75*2, angle=0, theta1=512.18140, theta2=387.8183218, color='r'))
-#ax.add_patch(mpl_Arc((-2, 0), width = 0.75*2, height = 0.75*2, angle=0, theta1=512.18140, theta2=387.8183218, color='r'))
-ax.set_aspect('equal') #, 'box')
-plt.xlim([-10, 10])
-plt.ylim([-10, 10])
-plt.show()
-# plt.savefig(dpi=dpi, fname=f'./comp/{comp.part_name}_BOTTOM.png')
-# %%
