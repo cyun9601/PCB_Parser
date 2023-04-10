@@ -56,6 +56,10 @@ class PCB:
         for comp in self.components_dict.values():
             comp.initialize()
         
+    def reset(self):
+        self.initialize_background()
+        self.initialize_components()
+        
     def get_fixed_components(self) -> list[str]:
         return [comp.name for comp in self.components_dict.values() if comp.fixed]
     
