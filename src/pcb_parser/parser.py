@@ -41,9 +41,6 @@ class PCB:
         pbar = tqdm(self.components_dict.values())
         for comp in pbar:
             pbar.set_description(comp.name)
-            
-            print(comp.placed_layer, comp.angle, len(comp.top_area), len(comp.bottom_area))
-            # if './comp_img'
             comp.draw_cv()
     
     def initialize_background(self):
