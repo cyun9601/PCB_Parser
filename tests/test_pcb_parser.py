@@ -17,11 +17,15 @@ with open("../data/debug_data.json", 'r') as f:
 ## PCB 객체 생성     
 pcb = PCB(data, p_resolution = 0.05)
 
+for net_name, net in pcb.net_list.items():
+    comp_list = net.name
+    for comp in comp_list:
+        pcb.get_component(comp)
+
 ## Fixed Component 이미지를 Background에 합치기 
 fixed_comp_name_list = pcb.get_fixed_components()
 for fixed_comp_name in fixed_comp_name_list:
     collision = pcb.merge_component(fixed_comp_name, inplace=True)
-print(pcb.state[0].shape)
     
 ## Unfixed Component 이미지를 Background에 합치기
 unfixed_comp_name_list = pcb.get_unfixed_components()
@@ -39,12 +43,21 @@ for unfixed_comp_name in unfixed_comp_name_list:
 
     collision = pcb.merge_component(unfixed_comp_name, inplace=True)
 
-# comp = pcb.components_dict[component_name]
-# top, bottom = comp.draw_cv()
-# front, back = comp.get_cv_img_center(size = board_img.shape, fill = False)
-
-# comp_merge_img, collision = merge_polygon(merged_img, pcb.board, comp.top_area.move(0, 0, inplace = True), resolution=0.05)
-
+# Netlist 에서 Bounding box 추출하고 Reward 생성 
+for net_name, net in pcb.net_list.items():
+    min_x, max_x, min_y, max_y = float("inf"), -float("inf"), float("inf"), -float("inf")
+    for comp in net.name:
+        _min_x, _max_x, _min_y, _max_y = pcb.get_component(comp).bounding_box
+        if _min_x < min_x:
+            min_x = _min_x
+        if max_x < _max_x:
+            max_x = _max_x
+        if _min_y < min_y:
+            min_y = _min_y
+        if max_y < _max_y:
+            max_y = _max_y
+print(min_x, max_x, min_y, max_y) 
+reward = max_x - min_x + max_y - min_y            
 
 # cv2.imshow('Board image', board_img)
 # cv2.imshow('Hole', hole_img)

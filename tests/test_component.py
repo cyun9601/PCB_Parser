@@ -26,12 +26,11 @@ top_img, bottom_img = comp.draw_cv(fill='in')
 comp_rot = comp.rotation(90)
 top_rot_img, bottom_rot_img = comp_rot.cv_top_img, comp_rot.cv_bottom_img
 cv2.imshow('TOP image', top_img)
-cv2.imshow('BOTTOM image', bottom_img)
+# cv2.imshow('BOTTOM image', bottom_img)
 cv2.imshow('TOP rot image', top_rot_img)
-cv2.imshow('BOTTOM rot image', bottom_rot_img)
+# cv2.imshow('BOTTOM rot image', bottom_rot_img)
 cv2.waitKey(0) 
 cv2.destroyAllWindows()
-
 
 ## Component의 draw_mat 테스트 
 ## Component 별로 TOP, BOTTOM 그림 그리기 

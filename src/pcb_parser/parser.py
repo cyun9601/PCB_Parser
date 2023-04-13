@@ -25,15 +25,12 @@ class PCB:
         self.net_list = dict(zip(self.pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(self.pcb_info['NetDict'].values())]))
         
         # 초기화
-        ## 초기 이미지 생성  
+        ## 초기 Comp 이미지 생성  
         self.initialize_cv_img()
         
         ## Background 초기화 -> self.state 생성  
         self.initialize_background()
         
-        ## Component 초기화 
-        self.initialize_components()
-    
     def initialize_cv_img(self):
         # initialize
         print('Board 이미지 생성 중...')
@@ -44,6 +41,9 @@ class PCB:
         pbar = tqdm(self.components_dict.values())
         for comp in pbar:
             pbar.set_description(comp.name)
+            
+            print(comp.placed_layer, comp.angle, len(comp.top_area), len(comp.bottom_area))
+            # if './comp_img'
             comp.draw_cv()
     
     def initialize_background(self):

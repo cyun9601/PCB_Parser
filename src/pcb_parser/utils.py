@@ -1,6 +1,9 @@
 import cv2
 import numpy as np 
 import copy 
+import os 
+
+img_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'comp_img')
 
 
 def img_rot_90(img, k):
