@@ -604,7 +604,7 @@ class Component:
         self.p_resolution = p_resolution
 
         # Component 초기화 
-        # self.initialize()
+        self.initialize()
         
     def initialize(self) -> None:
         # unfixed component 에 대한 처리
