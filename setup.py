@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
     
 setuptools.setup(
     name = 'pcb-parser',
-    version = 'v0.0.5',
+    version = 'v0.0.6',
     author = 'Changyun Choi',
     author_email = "cyun9601@gmail.com",
     description = "PCB Parser",
