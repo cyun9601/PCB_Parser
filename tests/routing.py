@@ -1,48 +1,7 @@
-from math import inf
-
-def bellman_ford(graph, source):
-    """
-    위 코드에서 graph는 딕셔너리로 구현된 그래프를 나타내며, 각 노드를 키(key)로 갖고 해당 노드와 이어진 노드와 가중치를 값(value)으로 갖는 딕셔너리
-    입니다. source는 최단 경로의 시작점이 될 노드입니다.
-
-    dist는 노드들의 최단 거리를 나타내는 딕셔너리입니다. dist[node]는 시작점으로부터 노드 node까지의 최단 거리를 의미합니다.
-
-    알고리즘은 먼저 모든 노드의 최단 거리를 무한대로 초기화합니다. 그리고 모든 간선을 반복하면서 최단 거리를 갱신합니다. 
-    
-    이 때 dist[u] + weight < dist[v]인 경우에만 최단 거리를 갱신합니다. 마지막으로 음수 사이클을 검사하고, 
-    
-    음수 사이클이 있다면 None과 함께 "Negative cycle detected" 메시지를 반환합니다.
-
-    알고리즘의 시간 복잡도는 O(VE)입니다.
-    """
-
-    # 그래프에서 노드들의 수를 구합니다.
-    nodes = list(graph.keys())
-    num_nodes = len(nodes)
-    
-    # 모든 노드의 최단 거리를 무한대로 초기화합니다.
-    dist = {node: inf for node in nodes}
-    dist[source] = 0
-    
-    # 모든 간선을 반복하면서 최단 거리를 갱신합니다.
-    for i in range(num_nodes - 1):
-        for u in nodes:
-            for v, weight in graph[u].items():
-                if dist[u] + weight < dist[v]:
-                    dist[v] = dist[u] + weight
-    
-    # 음수 사이클을 검사합니다.
-    for u in nodes:
-        for v, weight in graph[u].items():
-            if dist[u] + weight < dist[v]:
-                return None, "Negative cycle detected"
-    
-    return dist, None
-
-
+#%%
 import heapq
 import math
-
+#%%
 def heuristic(a, b):
     # 휴리스틱 함수: 두 노드 사이의 유클리드 거리 계산
     return math.sqrt((b[0] - a[0])**2 + (b[1] - a[1])**2)
@@ -98,58 +57,8 @@ def astar(array, start, goal):
                 priority = new_cost + heuristic(goal, next_node)
                 heapq.heappush(heap, (priority, next_node))
                 came_from[next_node] = current
-
-        r
-
-
-
-
-import heapq
-
-def dijkstra(graph, start, end):
-    # 시작 노드에서 각 노드까지의 거리를 저장할 딕셔너리
-    distances = {vertex: float('inf') for vertex in graph}
-    distances[start] = 0
-    
-    # 우선순위 큐
-    pq = [(0, start)]
-    
-    # 최단 경로 저장할 딕셔너리
-    previous_vertices = {vertex: None for vertex in graph}
-    
-    while len(pq) > 0:
-        # 우선순위가 가장 높은 노드 선택
-        current_distance, current_vertex = heapq.heappop(pq)
-        
-        # 이미 방문한 노드인 경우 건너뜀
-        if current_distance > distances[current_vertex]:
-            continue
-        
-        # 인접한 노드 탐색
-        for neighbor, weight in graph[current_vertex].items():
-            # 현재 노드에서 인접한 노드까지의 비용
-            distance = current_distance + weight
             
-            # 현재 노드를 거쳐서 인접한 노드까지 가는 것이 더 빠른 경우
-            if distance < distances[neighbor]:
-                distances[neighbor] = distance
-                previous_vertices[neighbor] = current_vertex
-                heapq.heappush(pq, (distance, neighbor))
-        
-        # 목표 노드에 도착하면 경로 반환
-        if current_vertex == end:
-            path = []
-            while previous_vertices[current_vertex] is not None:
-                path.append(current_vertex)
-                current_vertex = previous_vertices[current_vertex]
-            path.append(start)
-            path.reverse()
-            return path, distances[end]
-    
-    # 목표 노드에 도달할 수 없으면 None 반환
-    return None, None
-
-
+            
 #%%
 import sys 
 sys.path.append('/VOLUME/PNR/hjwon/PCB_Parser/src/')
@@ -169,7 +78,7 @@ with open("/VOLUME/PNR/data/sample_data.json", 'r') as f:
 pcb = PCB(data)
 pcb.pcb_info
 
-
+#%%
 group = []
 for component_name, v in pcb.components_dict.items():
     #print(component_name, len(v.top_area), len(v.bottom_area))
@@ -229,8 +138,8 @@ graph = {
 }
 
 # 물체 추가 - 충돌 방지
-add_obstacle(graph, 'C1', {'C': 1})
-add_obstacle(graph, 'D1', {'D': 1})
+add_obstacle(graph, 'C', {'C': 1})
+add_obstacle(graph, 'D', {'D': 1})
 
 # 최단 경로 찾기
 print(shortest_path(graph, 'A', 'F'))

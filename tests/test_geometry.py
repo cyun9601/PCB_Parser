@@ -8,6 +8,8 @@ import json
 import cv2 
 import matplotlib.pyplot as plt 
 import numpy as np 
+from matplotlib import pyplot as plt
+from matplotlib.patches import Arc as mpl_Arc
 #%%
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
@@ -52,6 +54,7 @@ arr = np.ones((100,100,3), dtype=np.uint8)*255
 arr = l1.draw_cv(arr)
 
 ##
+#%%
 # Arc 
 ## 객체 생성 
 p1 = Point(1, 0)
@@ -64,3 +67,32 @@ arc2 = arc1.move(10, 20)
 print("arc2: ", arc2)
 print("arc2: ", arc2.center)
 
+#%%
+# %%
+x = [i.x for i in arc1.ext_points()] #x축 좌표
+y = [i.y for i in arc1.ext_points()] 
+arc_min  = min(x),min(y)
+arc_max  = max(x),max(y)
+
+fig = plt.figure(figsize=(50,50), dpi=100)
+ax = fig.add_subplot(111)
+
+center = arc1.center
+width = arc1.radius * 2
+height = arc1.radius * 2
+angle = 0
+        
+if arc1.direction == 'CW' or arc1.direction == None:
+    theta1 = arc1.eAngle
+    theta2 = arc1.sAngle
+elif arc1.direction == 'CCW':
+    theta1 = arc1.sAngle
+    theta2 = arc1.eAngle
+ax.add_patch(mpl_Arc(center.to_tuple(), width, height, angle, theta1, theta2, color='r'))
+        
+#if bbox:
+min_x, min_y = arc_min 
+max_x, max_y = arc_max
+rect = plt.Rectangle((min_x, min_y), max_x-min_x, max_y-min_y, linewidth=5, edgecolor='b', facecolor='none')
+ax.add_patch(rect)
+# %%

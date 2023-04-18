@@ -1,4 +1,5 @@
 from abc import *
+from matplotlib import pyplot as plt
 from matplotlib.patches import Arc as mpl_Arc
 from matplotlib.lines import Line2D
 from .abs import Object
@@ -6,7 +7,6 @@ import math
 import numpy as np 
 from typing import Union  
 import cv2 
-
 
 
 class Point(Object):
@@ -195,6 +195,7 @@ class Arc(Curve):
     def __repr__(self) -> str:
         return f'Arc({self.start}, {self.end})'
             
+
     @property 
     def min_x(self): 
         x_min, y_min, x_max, y_max = self.get_extents().bounds
@@ -215,9 +216,13 @@ class Arc(Curve):
         x_min, y_min, x_max, y_max = self.get_extents().bounds
         return y_max
     
+    
     @property
     def bounding_box(self):
-        return self.min_x, self.max_x, self.min_y, self.max_y
+        x = [i[0] for i in self.ext_points()] #x축 좌표
+        y = [i[1] for i in self.ext_points()]
+        
+        return min(x),max(x), min(y), max(y)    
     
     @property
     def w(self):
@@ -227,7 +232,7 @@ class Arc(Curve):
     def h(self):
         raise NotImplementedError
             
-    def draw_mat(self, ax, shift_x=0, shift_y=0, color='k'):
+    def draw_mat(self, ax, shift_x=0, shift_y=0, color='k',bbox=False):
         center = self.move(shift_x, shift_y).center
         width = self.radius * 2
         height = self.radius * 2
@@ -239,9 +244,12 @@ class Arc(Curve):
         elif self.direction == 'CCW':
             theta1 = self.sAngle
             theta2 = self.eAngle
-        
         ax.add_patch(mpl_Arc(center.to_tuple(), width, height, angle, theta1, theta2, color=color))
         
+        if bbox:
+            min_x, max_x, min_y, max_y = self.b_box
+            rect = plt.Rectangle((min_x, min_y), max_x-min_x, max_y-min_y, linewidth=1, edgecolor='r', facecolor='none')
+            ax.add_patch(rect)
         
     def move(self, x, y, inplace = False) -> 'Arc':
         if inplace == False: 
@@ -358,7 +366,7 @@ class Polygon(Object):
             
             
     #    return arr
-    
+
     def move(self, x, y, inplace=False) -> 'Polygon':
         self.lines = [line.move(x, y, inplace) for line in self.lines]
         self.arcs = [arc.move(x, y, inplace) for arc in self.arcs]

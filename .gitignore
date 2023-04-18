@@ -5,6 +5,8 @@ __pycache__
 *.png
 *.ipynb
 .vscode
+Algorithm/*.py
+
 
 # setuptools 
 dist
