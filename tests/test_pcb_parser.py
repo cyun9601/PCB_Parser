@@ -1,6 +1,6 @@
 import pcb_parser
 from pcb_parser import PCB
-from pcb_parser.geometry import Polygon, Component, merge_polygon
+from pcb_parser.geometry import Polygon, Component
 import os 
 import json
 import cv2 
@@ -10,7 +10,7 @@ import copy
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-with open("../data/debug_data.json", 'r') as f:
+with open("../data/sample_data.json", 'r') as f:
     data = json.load(f)
 
 # PCB 테스트 

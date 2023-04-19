@@ -468,11 +468,6 @@ class Polygon(Object):
         if len(self) == 0: 
             return None 
         
-        # 기존에 그린게 있으면 해당 값을 반환
-        # if 'self.cv_img' in locals(): 
-        #     if (self.cv_resolution == resolution) & (self.cv_fill == fill):
-        #         return self.cv_img
-        
         # 원점으로 이동 
         polygon = self.move(-self.min_x, -self.min_y)
 
@@ -601,6 +596,12 @@ class Component:
         else:
             NotImplementedError
 
+        self.top_area.draw_cv('fill')
+        self.bottom_area.draw_cv('fill')
+        self.top_prohibit_area.draw_cv('fill')
+        self.bottom_prohibit_area.draw_cv('fill') 
+        self.hole_area.draw_cv('fill')
+        
         self.p_resolution = p_resolution
 
         # Component 초기화 
@@ -691,8 +692,12 @@ class Component:
                 ## 이미지 삽입 
                 total_bottom_img[bottom_min_pix_h:bottom_min_pix_h + bottom_img.shape[0], bottom_min_pix_w:bottom_min_pix_w + bottom_img.shape[1]] = bottom_img 
 
-            self.cv_top_img = total_top_img    
-            self.cv_bottom_img = total_bottom_img   
+                im = Image.fromarray(total_bottom_img)
+                os.makedirs(img_path, exist_ok=True)
+                im.save(bottom_img_path)
+
+        self.cv_top_img = total_top_img    
+        self.cv_bottom_img = total_bottom_img   
             
         return self.cv_top_img, self.cv_bottom_img     
         
@@ -800,6 +805,7 @@ class Component:
             new_comp = copy.deepcopy(self)
             return new_comp.rotation(angle, inplace=True)
 
+'''
 def merge_polygon(base_img:np.array, background:Polygon, foreground:Polygon, resolution = 0.05, inplace = False) -> np.array:
     if inplace == False:
         base_img = copy.deepcopy(base_img)
@@ -831,3 +837,4 @@ def merge_polygon(base_img:np.array, background:Polygon, foreground:Polygon, res
         collision = False
     base_img[min_pix_h:min_pix_h+foreground.cv_img.shape[0], min_pix_w:min_pix_w+foreground.cv_img.shape[1]] = foreground.cv_img 
     return base_img, collision
+'''
