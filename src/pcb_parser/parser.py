@@ -99,12 +99,6 @@ class PCB:
         if save:
             plt.savefig(dpi=dpi, fname=image_name)
         return fig, ax
-    
-    #def draw_cv(self):
-        '''
-        *args : 부품이름 layer
-        '''
-     #   return   
         
     @property
     def get_size(self):
@@ -142,12 +136,19 @@ class PCB:
         if (min_pix_h < 0) or (min_pix_w < 0) or (max_pix_h > back_pix_h) or (max_pix_w > back_pix_w):
             return base_img, True
 
-        ## 이미지 삽입 
-        partial_base_img = base_img[min_pix_h:min_pix_h+foreground.cv_img.shape[0], min_pix_w:min_pix_w+foreground.cv_img.shape[1]]
-        if ((partial_base_img == 0) & (foreground.cv_img == 0)).sum() > 0: 
+        ## 이미지 삽입
+        partial_base_img = base_img[min_pix_h:min_pix_h+foreground.get_cv_img().shape[0], min_pix_w:min_pix_w+foreground.get_cv_img().shape[1]]
+        
+        ## 이미지 삽입 시, 이미지 크기가 다를 경우 예외처리
+        if partial_base_img.shape != foreground.get_cv_img() :
+            raise f'히히 신범쨩~ 이미지의 사이즈는 {partial_base_img.shape}, 부품의 사이즈는 {foreground.get_cv_img().shape} 이라서 안맞아영!' \
+                f'놓고자하는 부품의 Pixel 영역에서의 BBox 영역은 {min_pix_h, max_pix_h, min_pix_w, max_pix_w} 이고, 이미지의 Pixel 영역에서의 최대 사이즈는 {back_pix_h, back_pix_w} 이영!'\
+                    '너모나도 슬퍼여...'
+        
+        if ((partial_base_img == 0) & (foreground.get_cv_img() == 0)).sum() > 0: 
             collision = True
         else: 
-            base_img[min_pix_h:min_pix_h+foreground.cv_img.shape[0], min_pix_w:min_pix_w+foreground.cv_img.shape[1]] = foreground.cv_img 
+            base_img[min_pix_h:min_pix_h+foreground.get_cv_img().shape[0], min_pix_w:min_pix_w+foreground.get_cv_img().shape[1]] = foreground.get_cv_img() 
         return base_img, collision
     
     def merge_component(self, component_name:str, inplace=True) -> list[bool]:

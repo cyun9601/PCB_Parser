@@ -389,6 +389,11 @@ class Polygon(Object):
 
     def __add__(self, other):
         return Polygon([self.lines + other.lines, self.arcs + other.arcs], self.p_resolution)
+
+    def get_cv_img(self):
+        if 'self.cv_img' not in locals():
+            self.cv_img = self.draw_cv()
+        return self.cv_img
         
     @property 
     def min_x(self):
@@ -596,11 +601,11 @@ class Component:
         else:
             NotImplementedError
 
-        self.top_area.draw_cv('fill')
-        self.bottom_area.draw_cv('fill')
-        self.top_prohibit_area.draw_cv('fill')
-        self.bottom_prohibit_area.draw_cv('fill') 
-        self.hole_area.draw_cv('fill')
+        # self.top_area.draw_cv('fill')
+        # self.bottom_area.draw_cv('fill')
+        # self.top_prohibit_area.draw_cv('fill')
+        # self.bottom_prohibit_area.draw_cv('fill') 
+        # self.hole_area.draw_cv('fill')
         
         self.p_resolution = p_resolution
 
@@ -804,37 +809,3 @@ class Component:
         else:
             new_comp = copy.deepcopy(self)
             return new_comp.rotation(angle, inplace=True)
-
-'''
-def merge_polygon(base_img:np.array, background:Polygon, foreground:Polygon, resolution = 0.05, inplace = False) -> np.array:
-    if inplace == False:
-        base_img = copy.deepcopy(base_img)
-    
-    back_pix_h = int(round(background.h / resolution, 0)) + 1
-    back_pix_w = int(round(background.w / resolution, 0)) + 1
-    
-    ## Component의 원점 매핑 시 BBox 계산. 
-    moved_min_x = foreground.min_x - background.min_x
-    moved_max_x = foreground.max_x - background.min_x
-    moved_min_y = foreground.min_y - background.min_y 
-    moved_max_y = foreground.max_y - background.min_y 
-
-    ## Pixel 영역에서의 BBox 영역 매핑 
-    min_pix_h = back_pix_h - 1 - int(round((moved_max_y / resolution), 0))
-    max_pix_h = back_pix_h - 1 - int(round((moved_min_y / resolution), 0))
-    min_pix_w = int(round((moved_min_x / resolution), 0))
-    max_pix_w = int(round((moved_max_x / resolution), 0))
-
-    ## 이미지 범위 검사 
-    if (min_pix_h < 0) or (min_pix_w < 0) or (max_pix_h > back_pix_h) or (max_pix_w > back_pix_w):
-        return base_img, True
-
-    ## 이미지 삽입 
-    partial_base_img = base_img[min_pix_h:min_pix_h+foreground.cv_img.shape[0], min_pix_w:min_pix_w+foreground.cv_img.shape[1]]
-    if ((partial_base_img == 0) & (foreground.cv_img == 0)).sum() > 0: 
-        collision = True
-    else:
-        collision = False
-    base_img[min_pix_h:min_pix_h+foreground.cv_img.shape[0], min_pix_w:min_pix_w+foreground.cv_img.shape[1]] = foreground.cv_img 
-    return base_img, collision
-'''

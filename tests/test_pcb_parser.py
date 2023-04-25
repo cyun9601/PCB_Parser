@@ -33,8 +33,10 @@ for unfixed_comp_name in unfixed_comp_name_list:
     ## 모델 예측 -> 각 부품별 픽셀 위치 / 회전 
     
     ## Unfixed Component 의 위치 이동 
-    pix_x = int(round(pcb.state[0].shape[0] / 2))
-    pix_y = int(round(pcb.state[0].shape[1] / 2))
+    # pix_x = int(round(pcb.state[0].shape[0] / 2))
+    # pix_y = int(round(pcb.state[0].shape[1] / 2))
+    pix_x = pcb.state[0].shape[0]
+    pix_y = pcb.state[0].shape[1]
     pcb.move_to_pix(unfixed_comp_name, pix_x, pix_y)
     
     ## Unfixed Component 의 회전
