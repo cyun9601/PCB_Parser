@@ -152,6 +152,9 @@ class PCB:
         return base_img, collision
     
     def merge_component(self, component_name:str, inplace=True) -> list[bool]:
+        '''
+        음... 이건 Fixed Component에만 적용하는게 좋을거같음 -> 그냥 제거할에정
+        '''
         collision = [False, False]
         comp = self.get_component(component_name)
         polyg = [comp.top_area, comp.bottom_area]
@@ -159,3 +162,32 @@ class PCB:
         for i in range(2):
             self.state[i], collision[i] = self.merge_polygon(self.state[i], self.board, polyg[i], inplace=inplace)
         return collision
+    
+    def put_component(self, component_name:str, pix_x:int, pix_y:int, inplace=True) -> bool:
+        '''
+        좌측상단 픽셀위치. 양수여야함
+        return 은 충돌 여부. True 면 충돌, False 면 정상 
+        '''
+        
+        if pix_x < 0 or pix_y < 0:
+            raise Exception('Pixel 좌표는 양수여야 함')
+        
+        comp = self.get_component(component_name)
+        
+        ## 이미지 범위 검사 
+        max_pos_x = pix_x + comp.cv_top_img.shape[0]
+        max_pos_y = pix_y
+        
+        if (max_pos_y > self.state[0].shape[0]) or (max_pos_x > self.state[0].shape[1]):
+            return True # 이미지가 범위를 벗어나는 경우 
+        
+        top_partial = self.state[0][pix_x:pix_x + comp.cv_top_img.shape[0], pix_y:pix_y + comp.cv_top_img.shape[1]]
+        bottom_partial = self.state[1][pix_x:pix_x + comp.cv_bottom_img.shape[0], pix_y:pix_y + comp.cv_bottom_img.shape[1]]
+        
+        if (((top_partial == 0) & (comp.cv_top_img == 0)).sum() > 0) or (((bottom_partial == 0) & (comp.cv_bottom_img == 0)).sum() > 0): 
+            return True # 충돌 
+        else: 
+            self.state[0][pix_x:pix_x + comp.cv_top_img.shape[0], pix_y:pix_y + comp.cv_top_img.shape[1]] = comp.cv_top_img
+            self.state[1][pix_x:pix_x + comp.cv_bottom_img.shape[0], pix_y:pix_y + comp.cv_bottom_img.shape[1]] = comp.cv_bottom_img
+        return False
+        

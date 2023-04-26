@@ -459,7 +459,7 @@ class Polygon(Object):
         for arc in self.arcs:
             arc.draw_mat(ax, shift_x, shift_y, color=color)
     
-    def draw_cv(self, fill='in') -> np.array:
+    def draw_cv(self, fill='in', fitting=True) -> np.array:
         
         """
         Shape 의 cv 
@@ -475,11 +475,14 @@ class Polygon(Object):
         if len(self) == 0: 
             return None 
         
-        # 원점으로 이동 
-        polygon = self.move(-self.min_x, -self.min_y)
+        if fitting:
+            # 원점으로 이동 
+            polygon = self.move(-self.min_x, -self.min_y)
+        else: 
+            polygon = self.copy()
 
-        h = int(round(polygon.h / self.p_resolution, 0)) + 1 
-        w = int(round(polygon.w / self.p_resolution, 0)) + 1
+        h = int(round(polygon.max_y / self.p_resolution, 0)) + 1 
+        w = int(round(polygon.max_x / self.p_resolution, 0)) + 1
         polygon_img = np.ones((h, w)) * 255
         polygon_img = polygon_img.astype(np.uint8)
             
@@ -617,6 +620,9 @@ class Component:
     def initialize(self) -> None:
         # unfixed component 에 대한 처리
         if self.fixed == False: 
+            ## Center 0으로 초기화 
+            # self.move_to(Point(0, 0), inplace=True)
+            
             ## placed layer에 따라 스위칭
             if self.placed_layer == 'BOTTOM': 
                 self.switch_layer()
@@ -630,81 +636,45 @@ class Component:
         self.top_prohibit_area, self.bottom_prohibit_area = self.bottom_prohibit_area, self.top_prohibit_area
 
     def draw_cv(self, fill='in') -> tuple[np.array, np.array]:
-        img_path = os.path.join(img_folder, str(self.p_resolution), self.name)
-        top_img_path = os.path.join(img_path, 'top.png')
-        bottom_img_path = os.path.join(img_path, 'bottom.png')
+        # path 관련 변수 설정 
+        img_folder_ = os.path.join(img_folder, str(self.p_resolution))
+        img_path = os.path.join(img_folder_, f'{self.name}.npy')
         
-        if os.path.exists(top_img_path):
-            total_top_img = np.array(Image.open(top_img_path))
+        if os.path.isfile(img_path):
+            total_img = np.load(img_path)
+            if len(total_img) != 2:
+                raise Exception("The first dimension of img array must be 2.")
         else:
+            # 좌측하단 원점으로 이동 
             total_area = self.top_area + self.bottom_area
+            to_move_min_x, to_move_min_y = total_area.min_x, total_area.min_y 
             
+            top_area = self.top_area.move(-to_move_min_x, -to_move_min_y)
+            bottom_area = self.bottom_area.move(-to_move_min_x, -to_move_min_y)
+            
+            # Canvas 크기 계산 
             total_h = int(round(total_area.h / self.p_resolution, 0)) + 1
             total_w = int(round(total_area.w / self.p_resolution, 0)) + 1
             
-            # TOP
-            total_top_img = np.ones((total_h, total_w)) * 255
-            total_top_img = total_top_img.astype(np.uint8)
+            # Canvas 생성
+            total_img = np.ones((2, total_h, total_w)) * 255
+            total_img = total_img.astype(np.uint8)
 
-            top_img = self.top_area.draw_cv(fill=fill)
-            
+            # top image 삽입 
+            top_img = top_area.draw_cv(fill=fill, fitting=False)
             if top_img is not None: 
-                
-                ## Component의 원점 매핑 시 BBox 계산. 
-                top_moved_min_x = self.top_area.min_x - total_area.min_x
-                top_moved_max_x = self.top_area.max_x - total_area.min_x
-                top_moved_min_y = self.top_area.min_y - total_area.min_y 
-                top_moved_max_y = self.top_area.max_y - total_area.min_y 
-                
-                ## Pixel 영역에서의 BBox 영역 매핑 
-                top_min_pix_h = total_h - 1 - int(round((top_moved_max_y / self.p_resolution), 0))
-                top_max_pix_h = total_h - 1 - int(round((top_moved_min_y / self.p_resolution), 0))
-                top_min_pix_w = int(round((top_moved_min_x / self.p_resolution), 0))
-                top_max_pix_w = int(round((top_moved_max_x / self.p_resolution), 0))
-                
-                ## 이미지 삽입 
-                total_top_img[top_min_pix_h:top_min_pix_h+top_img.shape[0], top_min_pix_w:top_min_pix_w+top_img.shape[1]] = top_img 
+                total_img[0, total_img.shape[1] - top_img.shape[0]:, 0:top_img.shape[1]] = top_img 
 
-                im = Image.fromarray(total_top_img)
-                os.makedirs(img_path, exist_ok=True)
-                im.save(top_img_path)
-                
-        if os.path.exists(bottom_img_path):
-            total_bottom_img = np.array(Image.open(bottom_img_path))
-        else: 
-            total_area = self.top_area + self.bottom_area
-            
-            total_h = int(round(total_area.h / self.p_resolution, 0)) + 1
-            total_w = int(round(total_area.w / self.p_resolution, 0)) + 1
-            
-            # BOTTOM
-            total_bottom_img = np.ones((total_h, total_w)) * 255
-            total_bottom_img = total_bottom_img.astype(np.uint8)
-            
-            bottom_img = self.bottom_area.draw_cv(fill=fill)
-            
+            # bottom image 삽입 
+            bottom_img = bottom_area.draw_cv(fill=fill, fitting=False)
             if bottom_img is not None: 
-                ## Component의 원점 매핑 시 BBox 계산.
-                bottom_moved_min_x = self.bottom_area.min_x - total_area.min_x
-                bottom_moved_max_x = self.bottom_area.max_x - total_area.min_x
-                bottom_moved_min_y = self.bottom_area.min_y - total_area.min_y 
-                bottom_moved_max_y = self.bottom_area.max_y - total_area.min_y 
-            
-                ## Pixel 영역에서의 BBox 영역 매핑 
-                bottom_min_pix_h = total_h - 1 - int(round((bottom_moved_max_y / self.p_resolution), 0))
-                bottom_max_pix_h = total_h - 1 - int(round((bottom_moved_min_y / self.p_resolution), 0))
-                bottom_min_pix_w = int(round((bottom_moved_min_x / self.p_resolution), 0))
-                bottom_max_pix_w = int(round((bottom_moved_max_x / self.p_resolution), 0))
+                total_img[1, total_img.shape[1] - bottom_img.shape[0]:, 0:bottom_img.shape[1]] = bottom_img 
                 
-                ## 이미지 삽입 
-                total_bottom_img[bottom_min_pix_h:bottom_min_pix_h + bottom_img.shape[0], bottom_min_pix_w:bottom_min_pix_w + bottom_img.shape[1]] = bottom_img 
+            os.makedirs(img_folder_, exist_ok=True)
+            np.save(img_path, total_img)
 
-                im = Image.fromarray(total_bottom_img)
-                os.makedirs(img_path, exist_ok=True)
-                im.save(bottom_img_path)
-
-        self.cv_top_img = total_top_img    
-        self.cv_bottom_img = total_bottom_img   
+        self.cv_top_img = total_img[0, :, :]    
+        self.cv_bottom_img = total_img[1, :, :]   
             
         return self.cv_top_img, self.cv_bottom_img     
         
@@ -811,3 +781,4 @@ class Component:
         else:
             new_comp = copy.deepcopy(self)
             return new_comp.rotation(angle, inplace=True)
+         

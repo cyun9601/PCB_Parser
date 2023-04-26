@@ -7,6 +7,7 @@ import cv2
 import matplotlib.pyplot as plt  
 import numpy as np 
 import copy 
+import random
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
@@ -43,7 +44,9 @@ for unfixed_comp_name in unfixed_comp_name_list:
     angle = 90
     pcb.rotation(unfixed_comp_name, angle)
 
-    collision = pcb.merge_component(unfixed_comp_name, inplace=True)
+    pix_x = random.randint(0, pcb.state[0].shape[1])
+    pix_y = random.randint(0, pcb.state[0].shape[0])
+    collision = pcb.put_component(unfixed_comp_name, pix_x, pix_y, inplace=True)
 
 # Netlist 에서 Bounding box 추출하고 Reward 생성 
 for net_name, net in pcb.net_list.items():

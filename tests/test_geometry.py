@@ -142,7 +142,7 @@ arcs = []
 polygon = Polygon([lines, arcs])
 
 ## draw_cv test 
-cv_img = polygon.draw_cv(resolution=0.05)
+cv_img = polygon.draw_cv()
 cv2.imshow('Color image', cv_img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
