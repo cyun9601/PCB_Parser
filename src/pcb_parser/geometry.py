@@ -67,8 +67,10 @@ class Point(Object):
         x = self.x - center.x
         y = self.y - center.y
         
-        x_new = x * math.cos(angle) - y * math.sin(angle)
-        y_new = x * math.sin(angle) + y * math.cos(angle)
+        radian = math.pi * (angle/180)
+        
+        x_new = x * math.cos(radian) - y * math.sin(radian)
+        y_new = x * math.sin(radian) + y * math.cos(radian)
         
         x_new += center.x
         y_new += center.y

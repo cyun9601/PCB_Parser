@@ -51,7 +51,7 @@ for component_name, v in pcb.components_dict.items():
     ax.set_xlim([min_x-margin, max_x+margin])
     ax.set_ylim([min_y-margin, max_y+margin])
     ax.set_aspect('equal') #, 'box')
-    plt.savefig(dpi=dpi, fname=f'./comp/{comp.part_name}_TOP.png')
+    plt.savefig(dpi=dpi, fname=f'./comp/{comp.name}_TOP.png')
 
     fig = plt.figure(figsize=figsize, dpi=dpi)
     ax = fig.add_subplot(111)
@@ -64,7 +64,7 @@ for component_name, v in pcb.components_dict.items():
     ax.set_xlim([min_x-margin, max_x+margin])
     ax.set_ylim([min_y-margin, max_y+margin])
     ax.set_aspect('equal') #, 'box')
-    plt.savefig(dpi=dpi, fname=f'./comp/{comp.part_name}_BOTTOM.png')
+    plt.savefig(dpi=dpi, fname=f'./comp/{comp.name}_BOTTOM.png')
  
 
 
