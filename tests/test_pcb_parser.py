@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import copy 
 import random
+from PIL import Image
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
@@ -27,26 +28,27 @@ for net_name, net in pcb.net_list.items():
 fixed_comp_name_list = pcb.get_fixed_components()
 for fixed_comp_name in fixed_comp_name_list:
     collision = pcb.merge_component(fixed_comp_name, inplace=True)
-    
+        
 ## Unfixed Component 이미지를 Background에 합치기
 unfixed_comp_name_list = pcb.get_unfixed_components()
-for unfixed_comp_name in unfixed_comp_name_list:
+for i, unfixed_comp_name in enumerate(unfixed_comp_name_list):
     ## 모델 예측 -> 각 부품별 픽셀 위치 / 회전 
     
     ## Unfixed Component 의 위치 이동 
-    # pix_x = int(round(pcb.state[0].shape[0] / 2))
-    # pix_y = int(round(pcb.state[0].shape[1] / 2))
-    pix_x = pcb.state[0].shape[0]
-    pix_y = pcb.state[0].shape[1]
-    pcb.move_to_pix(unfixed_comp_name, pix_x, pix_y)
-    
-    ## Unfixed Component 의 회전
-    angle = 90
-    pcb.rotation(unfixed_comp_name, angle)
-
     pix_x = random.randint(0, pcb.state[0].shape[1])
     pix_y = random.randint(0, pcb.state[0].shape[0])
+    # # pcb.move_to_pix(unfixed_comp_name, pix_x, pix_y)
+
+    ## Unfixed Component 의 회전
+    # angle = 90
+    # pcb.rotation(unfixed_comp_name, angle)
     collision = pcb.put_component(unfixed_comp_name, pix_x, pix_y, inplace=True)
+    print(i, unfixed_comp_name, collision, pix_x, pix_y)
+    # im = Image.fromarray(pcb.state[0])
+    # im.save(f'./test_{i}_{unfixed_comp_name}_front.png')
+    # im = Image.fromarray(pcb.state[1])
+    # im.save(f'./test_{i}_{unfixed_comp_name}_back.png')
+
 
 # Netlist 에서 Bounding box 추출하고 Reward 생성 
 for net_name, net in pcb.net_list.items():

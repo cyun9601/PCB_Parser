@@ -175,19 +175,19 @@ class PCB:
         comp = self.get_component(component_name)
         
         ## 이미지 범위 검사 
-        max_pos_x = pix_x + comp.cv_top_img.shape[0]
-        max_pos_y = pix_y
+        max_pos_x = pix_x + comp.cv_top_img.shape[1]
+        max_pos_y = pix_y + comp.cv_top_img.shape[0]
         
         if (max_pos_y > self.state[0].shape[0]) or (max_pos_x > self.state[0].shape[1]):
             return True # 이미지가 범위를 벗어나는 경우 
         
-        top_partial = self.state[0][pix_x:pix_x + comp.cv_top_img.shape[0], pix_y:pix_y + comp.cv_top_img.shape[1]]
-        bottom_partial = self.state[1][pix_x:pix_x + comp.cv_bottom_img.shape[0], pix_y:pix_y + comp.cv_bottom_img.shape[1]]
+        top_partial = self.state[0][pix_y:max_pos_y, pix_x:max_pos_x]
+        bottom_partial = self.state[1][pix_y:max_pos_y, pix_x:max_pos_x]
         
         if (((top_partial == 0) & (comp.cv_top_img == 0)).sum() > 0) or (((bottom_partial == 0) & (comp.cv_bottom_img == 0)).sum() > 0): 
-            return True # 충돌 
+            return True # 충돌 ro
         else: 
-            self.state[0][pix_x:pix_x + comp.cv_top_img.shape[0], pix_y:pix_y + comp.cv_top_img.shape[1]] = comp.cv_top_img
-            self.state[1][pix_x:pix_x + comp.cv_bottom_img.shape[0], pix_y:pix_y + comp.cv_bottom_img.shape[1]] = comp.cv_bottom_img
+            self.state[0][pix_y:max_pos_y, pix_x:max_pos_x] = comp.cv_top_img
+            self.state[1][pix_y:max_pos_y, pix_x:max_pos_x] = comp.cv_bottom_img
         return False
         
