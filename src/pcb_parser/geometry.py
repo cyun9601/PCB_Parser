@@ -606,12 +606,6 @@ class Component:
         else:
             NotImplementedError
 
-        # self.top_area.draw_cv('fill')
-        # self.bottom_area.draw_cv('fill')
-        # self.top_prohibit_area.draw_cv('fill')
-        # self.bottom_prohibit_area.draw_cv('fill') 
-        # self.hole_area.draw_cv('fill')
-        
         self.p_resolution = p_resolution
 
         # Component 초기화 
@@ -635,7 +629,27 @@ class Component:
         self.top_area, self.bottom_area = self.bottom_area, self.top_area
         self.top_prohibit_area, self.bottom_prohibit_area = self.bottom_prohibit_area, self.top_prohibit_area
 
+        # self.cv_img가 그려져 있지 않을 경우가 존재 
+        if hasattr(self, 'cv_top_img'):
+            self.cv_top_img, self.cv_bottom_img = self.cv_bottom_img, self.cv_top_img
+
     def draw_cv(self, fill='in') -> tuple[np.array, np.array]:
+        """
+        - Desc -
+            Component의 Pixel 이미지를 그리는 Method.
+            그림은 placed layer 가 TOP 인 경우, Rotation이 0일 때, self.p_resolution 를 하나의 Pixel 단위로 그리고 부품명으로 저장
+            만약 이미지가 존재할 경우 이미지를 불러오고 placed layer 에 맞춰서 Top 과 Bottom 이미지를 변환 
+            
+        ### 저장할 때 회전과 placed layer 고려해서 저장하고 불러올것 ... ###
+            
+        - Input -
+            fill: 'in' or 'out'
+        
+        - Output -
+            (cv_top_img, cv_bottom_img): top layer와 Bottom layer의 이미지
+        
+        """
+        
         # path 관련 변수 설정 
         img_folder_ = os.path.join(img_folder, str(self.p_resolution))
         img_path = os.path.join(img_folder_, f'{self.name}.npy')
@@ -671,6 +685,7 @@ class Component:
                 total_img[1, total_img.shape[1] - bottom_img.shape[0]:, 0:bottom_img.shape[1]] = bottom_img 
                 
             os.makedirs(img_folder_, exist_ok=True)
+            
             np.save(img_path, total_img)
 
         self.cv_top_img = total_img[0, :, :]    

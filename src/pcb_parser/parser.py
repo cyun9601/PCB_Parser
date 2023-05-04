@@ -170,7 +170,8 @@ class PCB:
         '''
         
         if pix_x < 0 or pix_y < 0:
-            raise Exception('Pixel 좌표는 양수여야 함')
+            return False
+            # raise Exception('Pixel 좌표는 양수여야 함')
         
         comp = self.get_component(component_name)
         
@@ -179,13 +180,13 @@ class PCB:
         max_pos_y = pix_y + comp.cv_top_img.shape[0]
         
         if (max_pos_y > self.state[0].shape[0]) or (max_pos_x > self.state[0].shape[1]):
-            return True # 이미지가 범위를 벗어나는 경우 
+            return True # 이미지가 범위를 벗어나는 경우
         
         top_partial = self.state[0][pix_y:max_pos_y, pix_x:max_pos_x]
         bottom_partial = self.state[1][pix_y:max_pos_y, pix_x:max_pos_x]
         
         if (((top_partial == 0) & (comp.cv_top_img == 0)).sum() > 0) or (((bottom_partial == 0) & (comp.cv_bottom_img == 0)).sum() > 0): 
-            return True # 충돌 ro
+            return True # 충돌
         else: 
             self.state[0][pix_y:max_pos_y, pix_x:max_pos_x] = comp.cv_top_img
             self.state[1][pix_y:max_pos_y, pix_x:max_pos_x] = comp.cv_bottom_img

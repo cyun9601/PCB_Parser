@@ -40,14 +40,18 @@ for i, unfixed_comp_name in enumerate(unfixed_comp_name_list):
     # # pcb.move_to_pix(unfixed_comp_name, pix_x, pix_y)
 
     ## Unfixed Component 의 회전
-    # angle = 90
-    # pcb.rotation(unfixed_comp_name, angle)
+    angle = 90
+    pcb.rotation(unfixed_comp_name, angle)
+    pcb.switch_component_layer(unfixed_comp_name)
+    print("unfixed_comp_name:", unfixed_comp_name)
     collision = pcb.put_component(unfixed_comp_name, pix_x, pix_y, inplace=True)
     print(i, unfixed_comp_name, collision, pix_x, pix_y)
-    # im = Image.fromarray(pcb.state[0])
-    # im.save(f'./test_{i}_{unfixed_comp_name}_front.png')
-    # im = Image.fromarray(pcb.state[1])
-    # im.save(f'./test_{i}_{unfixed_comp_name}_back.png')
+    im = Image.fromarray(pcb.state[0])
+    print("PCB top img shape", pcb.state[0].shape)
+    im.save(f'./test_{i}_{unfixed_comp_name}_front.png')
+    im = Image.fromarray(pcb.state[1])
+    print("PCB bottom img shape", pcb.state[1].shape)
+    im.save(f'./test_{i}_{unfixed_comp_name}_back.png')
 
 
 # Netlist 에서 Bounding box 추출하고 Reward 생성 
@@ -63,6 +67,7 @@ for net_name, net in pcb.net_list.items():
             min_y = _min_y
         if max_y < _max_y:
             max_y = _max_y
+            
 print(min_x, max_x, min_y, max_y) 
 reward = max_x - min_x + max_y - min_y            
 
