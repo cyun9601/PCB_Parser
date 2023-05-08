@@ -187,7 +187,7 @@ class PCB:
         if (((top_partial == 0) & (comp.cv_top_img == 0)).sum() > 0) or (((bottom_partial == 0) & (comp.cv_bottom_img == 0)).sum() > 0): 
             return True # 충돌
         else: 
-            self.state[0][pix_y:max_pos_y, pix_x:max_pos_x] = self.state[0][pix_y:max_pos_y, pix_x:max_pos_x] | comp.cv_top_img
-            self.state[1][pix_y:max_pos_y, pix_x:max_pos_x] = self.state[1][pix_y:max_pos_y, pix_x:max_pos_x] | comp.cv_bottom_img
+            self.state[0][pix_y:max_pos_y, pix_x:max_pos_x] = (~((self.state[0][pix_y:max_pos_y, pix_x:max_pos_x] == 0) | (comp.cv_top_img == 0))).astype('int') * 255
+            self.state[1][pix_y:max_pos_y, pix_x:max_pos_x] = (~((self.state[1][pix_y:max_pos_y, pix_x:max_pos_x] == 0) | (comp.cv_bottom_img == 0))).astype('int') * 255
         return False
         
