@@ -25,6 +25,7 @@ top_img, bottom_img = comp.draw_cv(fill='in')
 ## Component 객체의 Rotation 테스트 
 comp_rot = comp.rotation(90)
 top_rot_img, bottom_rot_img = comp_rot.cv_top_img, comp_rot.cv_bottom_img
+cv2.circle(top_img, (comp.pin_dict[0].pix_x, comp.pin_dict[0].pix_y), 1, (0, 0, 0), 3)
 cv2.imshow('TOP image', top_img)
 # cv2.imshow('BOTTOM image', bottom_img)
 cv2.imshow('TOP rot image', top_rot_img)

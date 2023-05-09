@@ -380,7 +380,7 @@ class Arc(Curve):
         
 class Polygon(Object):
     def __init__(self, data:Union[dict, list, tuple], p_resolution=0.05) -> None:
-        if type(data) == dict: 
+        if type(data) == dict:
             self.lines, self.arcs = self.parsing_shape(data)        
         elif (type(data) in [list, tuple]) and (len(data) == 2):
             self.lines, self.arcs = data
@@ -393,7 +393,7 @@ class Polygon(Object):
         return Polygon([self.lines + other.lines, self.arcs + other.arcs], self.p_resolution)
 
     def get_cv_img(self):
-        if 'self.cv_img' not in locals():
+        if not hasattr(self, 'cv_img'):
             self.cv_img = self.draw_cv()
         return self.cv_img
         
@@ -579,14 +579,32 @@ class Polygon(Object):
             lines = [line.rotation(angle, center, inplace) for line in self.lines]
             arcs = [arc.rotation(angle, center, inplace) for arc in self.arcs]
             return Polygon([lines, arcs], self.p_resolution)
-    
+
+class Pin: # dataclass 
+    def __init__(self, pin_info:dict) -> None:
+        self.no = pin_info['No']
+        self.name = pin_info['Name']
+        self.gate_pin_name = pin_info['GatePinName']
+        self.type = pin_info['Type']
+        self.pad_number = pin_info['PadNo']
+        self.angle = pin_info['Angle']
+        self.position = Point(float(pin_info['X']), float(pin_info['Y']))
+        
+    def move(self, x, y, inplace=False):
+        if inplace:
+            self.x += x
+            self.y += y
+            return self
+        else:
+            new_pin = copy.deepcopy(self)
+            return new_pin.move(x, y, inplace=True)
+
 class Component:
     def __init__(self, data:dict, p_resolution:float = 0.05) -> None:
-        
         if type(data) == dict: 
             self.part_number = int(data['PartNo'])
             self.name = data['Name']
-            self.placed_layer = data['PlacedLayer'] # 'TOP' 'BOTTOM'
+            self.placed_layer = data['PlacedLayer'] # 'TOP', 'BOTTOM'
             self.center = Point(float(data['X']), float(data['Y'])) 
             self.angle = float(data['Angle'])
             self.ecad_angle = float(data['ECADAngle'])
@@ -595,12 +613,12 @@ class Component:
             self.part_name = data['PartName']
             self.ecad_part_name = data['ECADPartName']
             self.package_name = data['PackageName']
+            self.pin_dict = [Pin(p) for p in data['PinDict'].values()]
             self.top_area = Polygon(data['CompArea_Top'], p_resolution).move(self.center.x, self.center.y)
             self.bottom_area = Polygon(data['CompArea_Bottom'], p_resolution).move(self.center.x, self.center.y)
             self.top_prohibit_area = Polygon(data['CompProhibitArea_Top'], p_resolution).move(self.center.x, self.center.y)
             self.bottom_prohibit_area = Polygon(data['CompProhibitArea_Bottom'], p_resolution).move(self.center.x, self.center.y)
             self.hole_area = Polygon(data['HoleArea'], p_resolution).move(self.center.x, self.center.y)
-            self.pin_dict = data['PinDict']
             self.fixed = data['Fixed']
             self.group = data['Group']
         else:
@@ -654,11 +672,11 @@ class Component:
         img_folder_ = os.path.join(img_folder, str(self.p_resolution))
         img_path = os.path.join(img_folder_, f'{self.name}.npy')
         
-        if os.path.isfile(img_path):
+        if os.path.isfile(img_path): # 저장된 Comp 이미지 있을 경우 가져옴 
             total_img = np.load(img_path)
             if len(total_img) != 2:
                 raise Exception("The first dimension of img array must be 2.")
-        else:
+        else: # 저장된 Comp 이미지 없을 경우 새로 그림 
             # 좌측하단 원점으로 이동 
             total_area = self.top_area + self.bottom_area
             to_move_min_x, to_move_min_y = total_area.min_x, total_area.min_y 

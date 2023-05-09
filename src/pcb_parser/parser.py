@@ -179,7 +179,7 @@ class PCB:
         max_pos_y = pix_y + comp.cv_top_img.shape[0]
         
         if (max_pos_y > self.state[0].shape[0]) or (max_pos_x > self.state[0].shape[1]):
-            return True # 이미지가 범위를 벗어나는 경우
+            return True # 이미지가 범위를 벗어나는 경우 충돌
         
         top_partial = self.state[0][pix_y:max_pos_y, pix_x:max_pos_x]
         bottom_partial = self.state[1][pix_y:max_pos_y, pix_x:max_pos_x]
@@ -187,7 +187,18 @@ class PCB:
         if (((top_partial == 0) & (comp.cv_top_img == 0)).sum() > 0) or (((bottom_partial == 0) & (comp.cv_bottom_img == 0)).sum() > 0): 
             return True # 충돌
         else: 
+            # 해당 Position 에 부품 삽입
             self.state[0][pix_y:max_pos_y, pix_x:max_pos_x] = (~((self.state[0][pix_y:max_pos_y, pix_x:max_pos_x] == 0) | (comp.cv_top_img == 0))).astype('int') * 255
             self.state[1][pix_y:max_pos_y, pix_x:max_pos_x] = (~((self.state[1][pix_y:max_pos_y, pix_x:max_pos_x] == 0) | (comp.cv_bottom_img == 0))).astype('int') * 255
+        
+            # 삽입된 부품의 위치정보 수정 
+            ## pixel을 float 영역으로 수정 
+            min_x = pix_x * self.p_resolution
+            max_y = (self.state[0].shape[1] - pix_y - 1) * self.p_resolution
+            center_x = (comp.max_x - comp.min_x) / 2 + min_x
+            center_y = max_y - (comp.max_y - comp.min_y) / 2
+
+            # float 영역에서의 component 이동 
+            comp.move_to(Point(center_x, center_y), inplace=True)
         return False
         
