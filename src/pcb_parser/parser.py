@@ -28,8 +28,8 @@ class PCB:
         ## 초기 Comp 이미지 생성  
         self.initialize_cv_img()
         
-        ## Background 초기화 -> self.state 생성  
-        self.initialize_background()
+        ## Background 초기화 -> self.state 생성
+        self.initialize_background()  
         
     def initialize_cv_img(self):
         # initialize
@@ -104,7 +104,14 @@ class PCB:
     def get_size(self):
         return self.board.bounding_box
     
-    def get_component(self, name:str):
+    def get_component(self, name:str) -> Component:
+        """
+        - Desc -
+        부품의 이름을 입력으로 받아서 component dict에서 해당 부품을 반환하는 method.
+        
+        - Input -
+        name(str): 부품의 이름
+        """
         return self.components_dict[name]
     
     def merge_polygon(self, base_img:np.array, background:Polygon, foreground:Polygon, inplace = False) -> tuple[np.array, bool]:
@@ -163,10 +170,22 @@ class PCB:
         return collision
     
     def put_component(self, component_name:str, pix_x:int, pix_y:int, inplace=True) -> bool:
-        '''
-        좌측상단 픽셀위치. 양수여야함
-        return 은 충돌 여부. True 면 충돌, False 면 정상 
-        '''
+        """
+        - Desc -
+        부품을 특정 위치에 놓는 Method. 
+        부품의 좌측상단 픽셀위치를 기준으로 놓음.
+        부품이 기존 이미지와 충돌할 경우, 충돌 여부를 반환함.
+        충돌 발생 시, self.state 를 업데이트 하지 않음.  
+        
+        - Input -
+        component_name(str): 
+        pix_x(int): 부품의 좌측 상단 픽셀의 x 좌표 
+        pix_y(int): 부품의 좌측 상단 픽셀의 y 좌표 
+        inplace(bool):
+        
+        - Output -
+        collision(bool): 충돌 여부. True 면 충돌, False 면 정상. 
+        """
         
         if pix_x < 0 or pix_y < 0:
             return False

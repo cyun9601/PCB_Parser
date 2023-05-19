@@ -1,6 +1,6 @@
 #%%
 import sys 
-sys.path.append('/VOLUME/PNR/hjwon/PCB_Parser/src/')
+# sys.path.append('/VOLUME/PNR/hjwon/PCB_Parser/src/')
 
 from pcb_parser.geometry import Point, Line, Arc, Polygon, Component
 import os 
