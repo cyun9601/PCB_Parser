@@ -17,6 +17,11 @@ class Point(Object):
         self.x = x 
         self.y = y 
         
+    def get_pix(self, resolution):
+        x = int(round(self.x / resolution, 0))
+        y = int(round(self.y / resolution, 0))
+        return x, y
+        
     def min_x(self):
         return self.x
     
@@ -379,18 +384,18 @@ class Arc(Curve):
             return self.copy().rotation(angle, center, inplace = True)
         
 class Polygon(Object):
-    def __init__(self, data:Union[dict, list, tuple], p_resolution=0.05) -> None:
+    def __init__(self, data:Union[dict, list, tuple], resolution=0.05) -> None:
         if type(data) == dict:
             self.lines, self.arcs = self.parsing_shape(data)        
         elif (type(data) in [list, tuple]) and (len(data) == 2):
             self.lines, self.arcs = data
-        self.p_resolution = p_resolution
+        self.resolution = resolution
         
     def __len__(self):
         return len(self.lines) + len(self.arcs)
 
     def __add__(self, other):
-        return Polygon([self.lines + other.lines, self.arcs + other.arcs], self.p_resolution)
+        return Polygon([self.lines + other.lines, self.arcs + other.arcs], self.resolution)
 
     def get_cv_img(self):
         if not hasattr(self, 'cv_img'):
@@ -481,24 +486,24 @@ class Polygon(Object):
         else: 
             polygon = self.copy()
 
-        h = int(round(polygon.max_y / self.p_resolution, 0)) + 1 
-        w = int(round(polygon.max_x / self.p_resolution, 0)) + 1
+        h = int(round(polygon.max_y / self.resolution, 0)) + 1 
+        w = int(round(polygon.max_x / self.resolution, 0)) + 1
         polygon_img = np.ones((h, w)) * 255
         polygon_img = polygon_img.astype(np.uint8)
             
         # Draw line 
         for line in polygon.lines:
-            start_x = int(round(line.start.x / self.p_resolution, 0))
-            start_y = h - 1 - int(round(line.start.y / self.p_resolution, 0))
-            end_x = int(round(line.end.x / self.p_resolution, 0))
-            end_y = h - 1 - int(round(line.end.y / self.p_resolution, 0))        
+            start_x = int(round(line.start.x / self.resolution, 0))
+            start_y = h - 1 - int(round(line.start.y / self.resolution, 0))
+            end_x = int(round(line.end.x / self.resolution, 0))
+            end_y = h - 1 - int(round(line.end.y / self.resolution, 0))        
             polygon_img = cv2.line(polygon_img, (start_x, start_y), (end_x, end_y), color = (0, 0, 0), thickness=1)
 
         # Draw arc
         for arc in polygon.arcs:
-            centerX = int(round(arc.centerX / self.p_resolution, 0))
-            centerY = h - 1 - int(round(arc.centerY / self.p_resolution, 0))
-            radius = int(round(arc.radius / self.p_resolution, 0))
+            centerX = int(round(arc.centerX / self.resolution, 0))
+            centerY = h - 1 - int(round(arc.centerY / self.resolution, 0))
+            radius = int(round(arc.radius / self.resolution, 0))
             if arc.start == arc.end:
                 theta1 = 0
                 theta2 = 360
@@ -578,7 +583,7 @@ class Polygon(Object):
         else:
             lines = [line.rotation(angle, center, inplace) for line in self.lines]
             arcs = [arc.rotation(angle, center, inplace) for arc in self.arcs]
-            return Polygon([lines, arcs], self.p_resolution)
+            return Polygon([lines, arcs], self.resolution)
 
 class Pin: # dataclass 
     def __init__(self, pin_info:dict) -> None:
@@ -590,17 +595,17 @@ class Pin: # dataclass
         self.angle = pin_info['Angle']
         self.position = Point(float(pin_info['X']), float(pin_info['Y']))
         
-    def move(self, x, y, inplace=False):
-        if inplace:
-            self.x += x
-            self.y += y
-            return self
-        else:
-            new_pin = copy.deepcopy(self)
-            return new_pin.move(x, y, inplace=True)
+    # def move(self, x, y, inplace=False):
+    #     if inplace:
+    #         self.x += x
+    #         self.y += y
+    #         return self
+    #     else:
+    #         new_pin = copy.deepcopy(self)
+    #         return new_pin.move(x, y, inplace=True)
 
 class Component:
-    def __init__(self, data:dict, p_resolution:float = 0.05) -> None:
+    def __init__(self, data:dict, resolution:float = 0.05) -> None:
         if type(data) == dict: 
             self.part_number = int(data['PartNo'])
             self.name = data['Name']
@@ -613,18 +618,18 @@ class Component:
             self.part_name = data['PartName']
             self.ecad_part_name = data['ECADPartName']
             self.package_name = data['PackageName']
-            self.pin_dict = [Pin(p) for p in data['PinDict'].values()]
-            self.top_area = Polygon(data['CompArea_Top'], p_resolution).move(self.center.x, self.center.y)
-            self.bottom_area = Polygon(data['CompArea_Bottom'], p_resolution).move(self.center.x, self.center.y)
-            self.top_prohibit_area = Polygon(data['CompProhibitArea_Top'], p_resolution).move(self.center.x, self.center.y)
-            self.bottom_prohibit_area = Polygon(data['CompProhibitArea_Bottom'], p_resolution).move(self.center.x, self.center.y)
-            self.hole_area = Polygon(data['HoleArea'], p_resolution).move(self.center.x, self.center.y)
+            self.pin_dict = {k:Pin(v) for k, v in data['PinDict'].items()}
+            self.top_area = Polygon(data['CompArea_Top'], resolution).move(self.center.x, self.center.y)
+            self.bottom_area = Polygon(data['CompArea_Bottom'], resolution).move(self.center.x, self.center.y)
+            self.top_prohibit_area = Polygon(data['CompProhibitArea_Top'], resolution).move(self.center.x, self.center.y)
+            self.bottom_prohibit_area = Polygon(data['CompProhibitArea_Bottom'], resolution).move(self.center.x, self.center.y)
+            self.hole_area = Polygon(data['HoleArea'], resolution).move(self.center.x, self.center.y)
             self.fixed = data['Fixed']
             self.group = data['Group']
         else:
             NotImplementedError
 
-        self.p_resolution = p_resolution
+        self.resolution = resolution
 
         # Component 초기화 
         self.initialize()
@@ -655,7 +660,7 @@ class Component:
         """
         - Desc -
             Component의 Pixel 이미지를 그리는 Method.
-            그림은 placed layer 가 TOP 인 경우, Rotation이 0일 때, self.p_resolution 를 하나의 Pixel 단위로 그리고 부품명으로 저장
+            그림은 placed layer 가 TOP 인 경우, Rotation이 0일 때, self.resolution 를 하나의 Pixel 단위로 그리고 부품명으로 저장
             만약 이미지가 존재할 경우 이미지를 불러오고 placed layer 에 맞춰서 Top 과 Bottom 이미지를 변환 
             
         ### 저장할 때 회전과 placed layer 고려해서 저장하고 불러올것 ... ###
@@ -669,7 +674,7 @@ class Component:
         """
         
         # path 관련 변수 설정 
-        img_folder_ = os.path.join(img_folder, str(self.p_resolution))
+        img_folder_ = os.path.join(img_folder, str(self.resolution))
         img_path = os.path.join(img_folder_, f'{self.name}.npy')
         
         if os.path.isfile(img_path): # 저장된 Comp 이미지 있을 경우 가져옴 
@@ -685,8 +690,8 @@ class Component:
             bottom_area = self.bottom_area.move(-to_move_min_x, -to_move_min_y)
             
             # Canvas 크기 계산 
-            total_h = int(round(total_area.h / self.p_resolution, 0)) + 1
-            total_w = int(round(total_area.w / self.p_resolution, 0)) + 1
+            total_h = int(round(total_area.h / self.resolution, 0)) + 1
+            total_w = int(round(total_area.w / self.resolution, 0)) + 1
             
             # Canvas 생성
             total_img = np.ones((2, total_h, total_w)) * 255

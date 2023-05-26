@@ -47,6 +47,10 @@ for comp_name in comp_list:
 # Routing 
 router = Router(pcb)
 router.pcb.net_list
+comp_name = 'C01A'
+comp = router.pcb.get_component(comp_name)
 
+# 특정 Component의 Pin 위치를 가져옴 
+p = router.get_pin_position(comp_name, 1)
 
 a = 1

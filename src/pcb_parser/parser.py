@@ -13,23 +13,55 @@ class Net: # dataclass
         self.pin_no = net_info['PinNo']
 
 class PCB:
-    def __init__(self, pcb_dict:json, p_resolution:float=0.05) -> None:
-        self.p_resolution = p_resolution
+    def __init__(self, pcb_dict:json, resolution:float=0.05) -> None:
+        self.resolution = resolution
         self.pcb_info = list(pcb_dict.values())[0]
         self.file_name = self.pcb_info['FileName']
         self.file_format = self.pcb_info['FileFormat']
-        self.board = Polygon(self.pcb_info['BOARD_FIGURE'], p_resolution)
-        self.hole_area = Polygon(self.pcb_info['HoleArea'], p_resolution)
-        self.prohibit_area = Polygon(self.pcb_info['ProhibitArea'], p_resolution)
-        self.components_dict = {comp_info['Name']:Component(comp_info, p_resolution) for comp_info in self.pcb_info['ComponentDict'].values()}
+        self.redraw()
+    
+    def gen_object(self, resolution):
+        """
+        - Description - 
+        PCB Dict에 포함되는 Polygon, Component, Net 객체를 생성 
+        
+        - Input -
+        resolution(float): resolution  
+        
+        """
+        
+        self.board = Polygon(self.pcb_info['BOARD_FIGURE'], resolution)
+        self.hole_area = Polygon(self.pcb_info['HoleArea'], resolution)
+        self.prohibit_area = Polygon(self.pcb_info['ProhibitArea'], resolution)
+        self.components_dict = {comp_info['Name']:Component(comp_info, resolution) for comp_info in self.pcb_info['ComponentDict'].values()}
         self.net_list = dict(zip(self.pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(self.pcb_info['NetDict'].values())]))
         
-        # 초기화
-        ## 초기 Comp 이미지 생성  
+    def redraw(self):
+        """
+        - Description -
+        PCB 정보를 포함하는 Dictionary 에서 PCB 정보를 추출하고 CV 맵 및 Component 를 그려서 저장 
+        
+        """
+        # 새로운 resolution 에 맞춰서 객체 업데이트 
+        self.gen_object(self.resolution)
+        
+        ## Comp 이미지 생성
         self.initialize_cv_img()
         
-        ## Background 초기화 -> self.state 생성
-        self.initialize_background()  
+        ## Background 초기화 -> self.state 생성 
+        self.initialize_background()
+    
+    def update_resolution(self, resolution:float):
+        """
+        - Description -
+        PCB 객체의 Resolution 을 업데이트하면 Resolution 을 반영하여 모든 객체를 업데이트
+        
+        - Input - 
+        resolution(float): 업데이트할 Resolution 값
+         
+        """
+        self.resolution = resolution
+        self.redraw()
         
     def initialize_cv_img(self):
         # initialize
@@ -64,8 +96,8 @@ class PCB:
         return [comp.name for comp in self.components_dict.values() if not comp.fixed]
     
     def move_to_pix(self, component_name, pix_x:int, pix_y:int): 
-        to_x = pix_x * self.p_resolution
-        to_y = pix_y * self.p_resolution
+        to_x = pix_x * self.resolution
+        to_y = pix_y * self.resolution
         self.components_dict[component_name].move_to(Point(to_x, to_y), inplace=True)
     
     def rotation(self, component_name, angle):
@@ -124,8 +156,8 @@ class PCB:
         if inplace == False:
             base_img = copy.deepcopy(base_img)
         
-        back_pix_h = int(round(background.h / self.p_resolution, 0)) + 1
-        back_pix_w = int(round(background.w / self.p_resolution, 0)) + 1
+        back_pix_h = int(round(background.h / self.resolution, 0)) + 1
+        back_pix_w = int(round(background.w / self.resolution, 0)) + 1
         
         ## Component의 원점 매핑 시 BBox 계산. 
         moved_min_x = foreground.min_x - background.min_x
@@ -134,10 +166,10 @@ class PCB:
         moved_max_y = foreground.max_y - background.min_y 
 
         ## Pixel 영역에서의 BBox 영역 매핑 
-        min_pix_h = back_pix_h - 1 - int(round((moved_max_y / self.p_resolution), 0))
-        max_pix_h = back_pix_h - 1 - int(round((moved_min_y / self.p_resolution), 0))
-        min_pix_w = int(round((moved_min_x / self.p_resolution), 0))
-        max_pix_w = int(round((moved_max_x / self.p_resolution), 0))
+        min_pix_h = back_pix_h - 1 - int(round((moved_max_y / self.resolution), 0))
+        max_pix_h = back_pix_h - 1 - int(round((moved_min_y / self.resolution), 0))
+        min_pix_w = int(round((moved_min_x / self.resolution), 0))
+        max_pix_w = int(round((moved_max_x / self.resolution), 0))
 
         ## 이미지 범위 검사 
         if (min_pix_h < 0) or (min_pix_w < 0) or (max_pix_h > back_pix_h) or (max_pix_w > back_pix_w):
@@ -187,6 +219,10 @@ class PCB:
         collision(bool): 충돌 여부. True 면 충돌, False 면 정상. 
         """
         
+        # pix_x, pix_y type check
+        assert isinstance(pix_x, int), 'pix_x must be integer type' 
+        assert isinstance(pix_y, int), 'pix_y must be integer type' 
+        
         if pix_x < 0 or pix_y < 0:
             return False
             # raise Exception('Pixel 좌표는 양수여야 함')
@@ -212,8 +248,8 @@ class PCB:
         
             # 삽입된 부품의 위치정보 수정 
             ## pixel을 float 영역으로 수정 
-            min_x = pix_x * self.p_resolution
-            max_y = (self.state[0].shape[1] - pix_y - 1) * self.p_resolution
+            min_x = pix_x * self.resolution
+            max_y = (self.state[0].shape[1] - pix_y - 1) * self.resolution
             center_x = (comp.max_x - comp.min_x) / 2 + min_x
             center_y = max_y - (comp.max_y - comp.min_y) / 2
 
