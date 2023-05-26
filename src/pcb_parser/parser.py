@@ -18,7 +18,7 @@ class PCB:
         self.pcb_info = list(pcb_dict.values())[0]
         self.file_name = self.pcb_info['FileName']
         self.file_format = self.pcb_info['FileFormat']
-        self.redraw()
+        self.initialize()
     
     def gen_object(self, resolution):
         """
@@ -36,7 +36,7 @@ class PCB:
         self.components_dict = {comp_info['Name']:Component(comp_info, resolution) for comp_info in self.pcb_info['ComponentDict'].values()}
         self.net_list = dict(zip(self.pcb_info['NetDict'].keys(), [Net(net_info) for net_info in list(self.pcb_info['NetDict'].values())]))
         
-    def redraw(self):
+    def initialize(self):
         """
         - Description -
         PCB 정보를 포함하는 Dictionary 에서 PCB 정보를 추출하고 CV 맵 및 Component 를 그려서 저장 

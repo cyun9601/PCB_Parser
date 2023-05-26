@@ -45,7 +45,7 @@ for comp_name in comp_list:
 
 # %% 
 # Routing 
-router = Router(pcb)
+router = Router(pcb, resolution=0.005)
 router.pcb.net_list
 comp_name = 'C01A'
 comp = router.pcb.get_component(comp_name)

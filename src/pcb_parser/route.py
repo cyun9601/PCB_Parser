@@ -6,7 +6,7 @@ class Router:
     def __init__(self, PCB, resolution = 0.005):
         self.resolution = resolution
         self.pcb = PCB
-        self.pcb.redraw()
+        self.pcb.initialize()
         self.pcb.update_resolution(resolution)
         self.put_components()
         
