@@ -21,9 +21,13 @@ with open("/VOLUME/PNR/data/sample_data.json", 'r') as f:
 pcb = PCB(data)
 
 # %%
-# Placement 
-test_components = ['C01A', 'C01B', 'C01C', 'C01D', 'C01W']
-to_delete = set(pcb.components_dict.keys()) - set(test_components)
+# Placement
+## 특정 Component와 연관이 있는 부품들의 목록을 추출  
+center_component = 'CN485_ANGLE'
+connected_comp_list = pcb.get_connected_comps(center_component)
+
+## 해당 목록에 존재하지 않는 Comp들 제거 
+to_delete = set(pcb.components_dict.keys()) - set(connected_comp_list)
 
 for key in to_delete:
     del pcb.components_dict[key]
@@ -46,9 +50,7 @@ for comp_name in comp_list:
 # %% 
 # Routing 
 router = Router(pcb, resolution=0.005)
-router.pcb.net_list
-comp_name = 'C01A'
-comp = router.pcb.get_component(comp_name)
+comp = router.pcb.get_component(center_component)
 
 # 특정 Component의 Pin 위치를 가져옴 
 p = router.get_pin_position(comp_name, 1)

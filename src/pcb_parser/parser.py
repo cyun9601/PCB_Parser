@@ -14,8 +14,8 @@ class Net: # dataclass
 
 class PCB:
     def __init__(self, pcb_dict:json, resolution:float=0.05) -> None:
-        self.resolution = resolution
         self.pcb_info = list(pcb_dict.values())[0]
+        self.resolution = resolution
         self.file_name = self.pcb_info['FileName']
         self.file_format = self.pcb_info['FileFormat']
         self.initialize()
@@ -61,14 +61,14 @@ class PCB:
          
         """
         self.resolution = resolution
-        self.redraw()
+        self.initialize()
         
     def initialize_cv_img(self):
         # initialize
         print('Board 이미지 생성 중...')
         self.board.draw_cv()
         self.hole_area.draw_cv()
-        self.prohibit_area.draw_cv()         
+        self.prohibit_area.draw_cv()
         print('Component 이미지 생성 중...')
         pbar = tqdm(self.components_dict.values())
         for comp in pbar:
@@ -94,6 +94,47 @@ class PCB:
     
     def get_unfixed_components(self) -> list[str]:
         return [comp.name for comp in self.components_dict.values() if not comp.fixed]
+    
+    def get_connected_wires(self, comp_name:str) -> list[str]:
+        '''
+        - Desc -
+        comp_name과 연결 관계를 갖는 wire list 를 반환 
+        comp -> wire
+        
+        - Input -
+        comp_name(str): component name
+        
+        - Output -
+        connected_wire_list(list): comp_name과 연결 관계를 갖는 wire list
+        '''
+        
+        connected_wire_list = []
+        
+        for net_name, values in self.net_list.items():
+            if comp_name in values.name:
+                connected_wire_list.append(net_name)
+        return connected_wire_list
+    
+    def get_connected_comps(self, comp_name:str) -> list[str]:
+        '''
+        - Desc -
+        comp_name과 연결 관계를 갖는 comp list 를 반환
+        comp -> comp
+        
+        - Input -
+        comp_name(str): Component 이름 
+        
+        - Output -
+        connected_comp_list(list): comp_name과 연결 관계를 갖는 comp list
+        '''
+        wires_list = self.get_connected_wires(comp_name)
+        
+        comp_list = []
+        for wire in wires_list:
+            comp_list.extend(self.net_list[wire].name)
+        comp_list = list(set(comp_list))
+        comp_list.remove(comp_name)
+        return comp_list
     
     def move_to_pix(self, component_name, pix_x:int, pix_y:int): 
         to_x = pix_x * self.resolution
@@ -136,7 +177,7 @@ class PCB:
     def get_size(self):
         return self.board.bounding_box
     
-    def get_component(self, name:str) -> Component:
+    def get_component(self, comp_name:str) -> Component:
         """
         - Desc -
         부품의 이름을 입력으로 받아서 component dict에서 해당 부품을 반환하는 method.
@@ -144,7 +185,7 @@ class PCB:
         - Input -
         name(str): 부품의 이름
         """
-        return self.components_dict[name]
+        return self.components_dict[comp_name]
     
     def merge_polygon(self, base_img:np.array, background:Polygon, foreground:Polygon, inplace = False) -> tuple[np.array, bool]:
         collision = False
@@ -256,4 +297,8 @@ class PCB:
             # float 영역에서의 component 이동 
             comp.move_to(Point(center_x, center_y), inplace=True)
         return False
-        
+
+    
+    
+    
+

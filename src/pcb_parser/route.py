@@ -19,10 +19,8 @@ class Router:
     def __init__(self, PCB, resolution = 0.005):
         self.resolution = resolution
         self.pcb = PCB
-        self.pcb.initialize()
         self.pcb.update_resolution(resolution)
         self.put_components()
-        
         
         wire_name_list = list(self.pcb.net_list.keys())
         self.net = {wire_name:(tuple(zip(self.pcb.net_list[wire_name].name, self.pcb.net_list[wire_name].pin_no))) for wire_name in wire_name_list}
@@ -32,10 +30,22 @@ class Router:
             comp = self.pcb.get_component(comp_name)
 
             # comp 좌표 -> Integer
-            pix_x = int(round(comp.min_x / self.resolution, 0))
-            pix_y = int(round(comp.min_y / self.resolution, 0))
+            pix_x = self.float2pix(comp.min_x)
+            pix_y = self.float2pix(comp.min_y)
             
             self.pcb.put_component(comp_name, pix_x, pix_y, inplace=True)
+
+    def float2pix(self, x:float) -> int:
+        '''
+        float 영역의 값을 pixel 값으로 변경 
+        '''
+        return int(round(x / self.resolution, 0))
+
+    def pix2float(self, pix_x:int) -> float:
+        '''
+        pixel 영역의 값을 float 값으로 변경 
+        '''
+        return pix_x * self.resolution
 
     def get_pin_position(self, comp_name:str, pin_num:Union[str, int]) -> Point:
         """
@@ -55,7 +65,16 @@ class Router:
         pin_position = comp_center + comp.pin_dict[str(pin_num)].position
         return pin_position
 
-    #hj작성
+    def get_redraw_map(self, resolution:float):
+        """
+        - Desc -
+        새로운 Resolution 에 맞춰서 새로운 객체를 추출  
+        
+        - Input -
+        resolution(float):
+        """
+        return Router(self.PCB, resolution=resolution)
+     
     def astar(self, start_node:tuple[int], goal_node:tuple[int], state:np.array, wire_num:int):
         """
         state : rl 학습시 들어가게되는 state 정보
@@ -136,7 +155,6 @@ class Router:
         
         # 도착점에 도달할 수 없는 경우
         return None
-    
     
     def draw_wires(self):
         to_pred_wire_nums = [wire.wire_num for wire in self.wires]
