@@ -17,13 +17,33 @@ from typing import Union
 
 class Router:
     def __init__(self, PCB, resolution = 0.005):
-        self.resolution = resolution
+        self.__resolution = resolution
         self.pcb = PCB
         self.pcb.update_resolution(resolution)
         self.put_components()
         
         wire_name_list = list(self.pcb.net_list.keys())
         self.net = {wire_name:(tuple(zip(self.pcb.net_list[wire_name].name, self.pcb.net_list[wire_name].pin_no))) for wire_name in wire_name_list}
+
+    @property
+    def resulotion(self):
+        return self.__resolution
+
+    @resulotion.setter
+    def resulotion(self, resolution:float):
+        return Router(self.PCB, resolution=resolution)
+        
+    def get_redraw_map(self, resolution:float):
+        """
+        - Desc -
+        새로운 Resolution 에 맞춰서 새로운 객체를 추출  
+        
+        - Input -
+        resolution(float):
+        
+        """
+        return Router(self.PCB, resolution=resolution)
+     
 
     def put_components(self):
         for comp_name in self.pcb.components_dict.keys():
@@ -39,13 +59,13 @@ class Router:
         '''
         float 영역의 값을 pixel 값으로 변경 
         '''
-        return int(round(x / self.resolution, 0))
+        return int(round(x / self.__resolution, 0))
 
     def pix2float(self, pix_x:int) -> float:
         '''
         pixel 영역의 값을 float 값으로 변경 
         '''
-        return pix_x * self.resolution
+        return pix_x * self.__resolution
 
     def get_pin_position(self, comp_name:str, pin_num:Union[str, int]) -> Point:
         """
@@ -65,16 +85,6 @@ class Router:
         pin_position = comp_center + comp.pin_dict[str(pin_num)].position
         return pin_position
 
-    def get_redraw_map(self, resolution:float):
-        """
-        - Desc -
-        새로운 Resolution 에 맞춰서 새로운 객체를 추출  
-        
-        - Input -
-        resolution(float):
-        """
-        return Router(self.PCB, resolution=resolution)
-     
     def astar(self, start_node:tuple[int], goal_node:tuple[int], state:np.array, wire_num:int):
         """
         state : rl 학습시 들어가게되는 state 정보
@@ -83,6 +93,7 @@ class Router:
         """
         
         assert state.shape[0]==2, "state shape must be 2 channel"
+        
         # 그래프의 가로, 세로 길이
         channel, height, width = state.shape
         
@@ -92,7 +103,7 @@ class Router:
         # 각 노드의 이전 노드를 기록하는 딕셔너리
         parent_nodes = {}
         
-        # g: Start Node 에서 해당 노드까지의 실제 소요 경비값. 
+        # g: Start Node 에서 해당 노드까지의 실제 소요 경비값
         # 시작 노드로의 거리는 0, 그 외는 무한대로 초기화
         g_score = {node: float('inf') for node in np.ndindex(state.shape)}
         size  = sys.getsizeof(g_score)
@@ -207,8 +218,8 @@ class Router:
             start_layer = 0 if self.pcb.get_component(p[0][0]).placed_layer=='TOP' else 1 
             goal_layer = 0 if self.pcb.get_component(p[1][0]).placed_layer=='TOP' else 1 
             
-            start_node = (start_layer, *(start_point.get_pix(self.resolution)))
-            goal_node = (goal_layer,*(goal_point.get_pix(self.resolution)))
+            start_node = (start_layer, *(start_point.get_pix(self.__resolution)))
+            goal_node = (goal_layer,*(goal_point.get_pix(self.__resolution)))
             
             path = self.astar(start_node,goal_node,draw_map,wire_num)
             if path is None:
@@ -218,7 +229,6 @@ class Router:
                 else:
                     
                     return False          
-    
         return 
 
 #%%

@@ -12,6 +12,31 @@ import copy
 import os 
 from PIL import Image
  
+class BBox:
+    def __init__(self, min_x, min_y, max_x, max_y) -> None:
+        self.min_x = min_x
+        self.min_y = min_y
+        self.max_x = max_x
+        self.max_y = max_y
+
+    def __add__(self, other):
+        return BBox(
+            min(self.min_x, other.min_x),
+            min(self.min_y, other.min_y),
+            max(self.max_x, other.max_x),
+            max(self.max_y, other.max_y)
+        )
+    
+    @property
+    def width(self):
+        return self.max_x - self.min_x
+    
+    @property
+    def height(self):
+        return self.max_y - self.min_y
+    
+         
+
 class Point(Object):
     def __init__(self, x, y):
         self.x = x 
@@ -34,8 +59,9 @@ class Point(Object):
     def max_y(self):
         return self.y
     
+    @property
     def bounding_box(self):
-        return self.x, self.y, self.x, self.y
+        return BBox(self.x, self.y, self.x, self.y)
     
     def w(self):
         return 0
@@ -162,7 +188,7 @@ class Line(Curve):
 
     @property
     def bounding_box(self):
-        return self.min_x, self.max_x, self.min_y, self.max_y
+        return BBox(self.min_x, self.min_y, self.max_x, self.max_y)
     
     @property
     def w(self):
@@ -252,30 +278,26 @@ class Arc(Curve):
            
     @property 
     def min_x(self): 
-        min_x, max_x, min_y, max_y = self.bounding_box
-        return min_x
-    
-    @property 
-    def max_x(self): 
-        min_x, max_x, min_y, max_y = self.bounding_box
-        return max_x
+        return self.bounding_box.min_x
     
     @property 
     def min_y(self): 
-        min_x, max_x, min_y, max_y = self.bounding_box
-        return min_y
+        return self.bounding_box.min_y
+    
+    @property 
+    def max_x(self): 
+        return self.bounding_box.max_x
     
     @property 
     def max_y(self): 
-        min_x, max_x, min_y, max_y = self.bounding_box
-        return max_y
+        return self.bounding_box.max_y
     
     @property
     def bounding_box(self):
         points = [i for i in self.ext_points()]
         x = [points.x for points in points]
         y = [points.y for points in points]
-        return min(x), max(x), min(y), max(y)
+        return BBox(min(x), min(y), max(x), max(y))
     
     @property
     def w(self):
@@ -389,13 +411,13 @@ class Polygon(Object):
             self.lines, self.arcs = self.parsing_shape(data)        
         elif (type(data) in [list, tuple]) and (len(data) == 2):
             self.lines, self.arcs = data
-        self.resolution = resolution
+        self.__resolution = resolution
         
     def __len__(self):
         return len(self.lines) + len(self.arcs)
 
     def __add__(self, other):
-        return Polygon([self.lines + other.lines, self.arcs + other.arcs], self.resolution)
+        return Polygon([self.lines + other.lines, self.arcs + other.arcs], self.__resolution)
 
     def get_cv_img(self):
         if not hasattr(self, 'cv_img'):
@@ -448,7 +470,7 @@ class Polygon(Object):
     
     @property
     def bounding_box(self):
-            return self.min_x, self.max_x, self.min_y, self.max_y
+            return self.min_x, self.min_y, self.max_x, self.max_y
     
     @property
     def w(self):
@@ -486,24 +508,24 @@ class Polygon(Object):
         else: 
             polygon = self.copy()
 
-        h = int(round(polygon.max_y / self.resolution, 0)) + 1 
-        w = int(round(polygon.max_x / self.resolution, 0)) + 1
+        h = int(round(polygon.max_y / self.__resolution, 0)) + 1 
+        w = int(round(polygon.max_x / self.__resolution, 0)) + 1
         polygon_img = np.ones((h, w)) * 255
         polygon_img = polygon_img.astype(np.uint8)
             
         # Draw line 
         for line in polygon.lines:
-            start_x = int(round(line.start.x / self.resolution, 0))
-            start_y = h - 1 - int(round(line.start.y / self.resolution, 0))
-            end_x = int(round(line.end.x / self.resolution, 0))
-            end_y = h - 1 - int(round(line.end.y / self.resolution, 0))        
+            start_x = int(round(line.start.x / self.__resolution, 0))
+            start_y = h - 1 - int(round(line.start.y / self.__resolution, 0))
+            end_x = int(round(line.end.x / self.__resolution, 0))
+            end_y = h - 1 - int(round(line.end.y / self.__resolution, 0))        
             polygon_img = cv2.line(polygon_img, (start_x, start_y), (end_x, end_y), color = (0, 0, 0), thickness=1)
 
         # Draw arc
         for arc in polygon.arcs:
-            centerX = int(round(arc.centerX / self.resolution, 0))
-            centerY = h - 1 - int(round(arc.centerY / self.resolution, 0))
-            radius = int(round(arc.radius / self.resolution, 0))
+            centerX = int(round(arc.centerX / self.__resolution, 0))
+            centerY = h - 1 - int(round(arc.centerY / self.__resolution, 0))
+            radius = int(round(arc.radius / self.__resolution, 0))
             if arc.start == arc.end:
                 theta1 = 0
                 theta2 = 360
@@ -583,7 +605,7 @@ class Polygon(Object):
         else:
             lines = [line.rotation(angle, center, inplace) for line in self.lines]
             arcs = [arc.rotation(angle, center, inplace) for arc in self.arcs]
-            return Polygon([lines, arcs], self.resolution)
+            return Polygon([lines, arcs], self.__resolution)
 
 class Pin: # dataclass 
     def __init__(self, pin_info:dict) -> None:
@@ -607,14 +629,14 @@ class Pin: # dataclass
 class Component:
     def __init__(self, data:dict, resolution:float = 0.05) -> None:
         if type(data) == dict: 
-            self.part_number = int(data['PartNo'])
-            self.name = data['Name']
-            self.placed_layer = data['PlacedLayer'] # 'TOP', 'BOTTOM'
-            self.center = Point(float(data['X']), float(data['Y'])) 
-            self.angle = float(data['Angle'])
-            self.ecad_angle = float(data['ECADAngle'])
-            self.pin_num = int(data['Pin_Num'])
-            self.height = float(data['Height']) if data['Height'] != None else None
+            self.__part_number = int(data['PartNo'])
+            self.__name = data['Name']
+            self.__placed_layer = data['PlacedLayer'] # 'TOP', 'BOTTOM'
+            self.__center = Point(float(data['X']), float(data['Y'])) 
+            self.__angle = float(data['Angle'])
+            self.__ecad_angle = float(data['ECADAngle'])
+            self.__pin_num = int(data['Pin_Num'])
+            self.__height = float(data['Height']) if data['Height'] != None else None
             self.part_name = data['PartName']
             self.ecad_part_name = data['ECADPartName']
             self.package_name = data['PackageName']
@@ -624,21 +646,74 @@ class Component:
             self.top_prohibit_area = Polygon(data['CompProhibitArea_Top'], resolution).move(self.center.x, self.center.y)
             self.bottom_prohibit_area = Polygon(data['CompProhibitArea_Bottom'], resolution).move(self.center.x, self.center.y)
             self.hole_area = Polygon(data['HoleArea'], resolution).move(self.center.x, self.center.y)
-            self.fixed = data['Fixed']
+            self.__fixed = data['Fixed']
             self.group = data['Group']
+            
+            if self.__fixed: 
+                self.placed = True
+            else: 
+                self.placed = False
         else:
             NotImplementedError
 
-        self.resolution = resolution
+        self.__resolution = resolution
 
         # Component 초기화 
         self.initialize()
+       
+    @property
+    def part_number(self):
+        return self.__part_number
+    
+    @property
+    def name(self):
+        return self.__name
+    
+    @property
+    def placed_layer(self):
+        return self.__placed_layer
+    
+    @property
+    def center(self):
+        return self.__center
+    
+    @property
+    def angle(self):
+        return self.__angle
         
+    @property
+    def ecad_angle(self):
+        return self.__ecad_angle
+    
+    @property
+    def pin_num(self):
+        return self.__pin_num
+    
+    @property
+    def height(self):
+        return self.__height
+        
+    @property
+    def fixed(self):
+        return self.__fixed
+    
     def initialize(self) -> None:
+        """
+        - Desc -
+            배치가 필요한(self.fixed==False) 모든 Component 에 대해 초기화
+            
+            1. Bottom layer에 놓여있을 경우 TOP layer로 이동 (self.switch_layer())
+            2. angle을 0으로 초기화 (self.rotation(-self.angle, inplace=True))
+        
+        """
+        
         # unfixed component 에 대한 처리
-        if self.fixed == False: 
+        if self.__fixed == False: 
             ## Center 0으로 초기화 
             # self.move_to(Point(0, 0), inplace=True)
+            
+            ## placed 를 False 로 변경 
+            self.placed = False
             
             ## placed layer에 따라 스위칭
             if self.placed_layer == 'BOTTOM': 
@@ -648,7 +723,12 @@ class Component:
             self.rotation(-self.angle, inplace=True)
             
     def switch_layer(self) -> None:
-        self.placed_layer = 'TOP' if self.placed_layer == 'BOTTOM' else 'BOTTOM'
+        """
+        - Desc - 
+        component의 layer를 바꾸는 Method.
+        
+        """
+        self.__placed_layer = 'TOP' if self.__placed_layer == 'BOTTOM' else 'BOTTOM'
         self.top_area, self.bottom_area = self.bottom_area, self.top_area
         self.top_prohibit_area, self.bottom_prohibit_area = self.bottom_prohibit_area, self.top_prohibit_area
 
@@ -656,11 +736,25 @@ class Component:
         if hasattr(self, 'cv_top_img'):
             self.cv_top_img, self.cv_bottom_img = self.cv_bottom_img, self.cv_top_img
 
+    def get_pin_position(self, pin_num:Union[str, int]) -> Point:
+        """
+        - Desciption -
+        특정 Pin 번호 입력 시, 해당 핀의 위치를 반환해주는 메소드. 
+
+        - Input -
+        pin_num(int): Component의 Pin 번호 
+        
+        - Output -
+        Point(Point): 해당 핀의 Point 객체 
+        """
+        pin_position = self.center + self.pin_dict[str(pin_num)].position
+        return pin_position
+    
     def draw_cv(self, fill='in') -> tuple[np.array, np.array]:
         """
         - Desc -
             Component의 Pixel 이미지를 그리는 Method.
-            그림은 placed layer 가 TOP 인 경우, Rotation이 0일 때, self.resolution 를 하나의 Pixel 단위로 그리고 부품명으로 저장
+            그림은 placed layer 가 TOP 인 경우, Rotation이 0일 때, self.__resolution 를 하나의 Pixel 단위로 그리고 부품명으로 저장
             만약 이미지가 존재할 경우 이미지를 불러오고 placed layer 에 맞춰서 Top 과 Bottom 이미지를 변환 
             
         ### 저장할 때 회전과 placed layer 고려해서 저장하고 불러올것 ... ###
@@ -674,7 +768,7 @@ class Component:
         """
         
         # path 관련 변수 설정 
-        img_folder_ = os.path.join(img_folder, str(self.resolution))
+        img_folder_ = os.path.join(img_folder, str(self.__resolution))
         img_path = os.path.join(img_folder_, f'{self.name}.npy')
         
         if os.path.isfile(img_path): # 저장된 Comp 이미지 있을 경우 가져옴 
@@ -690,8 +784,8 @@ class Component:
             bottom_area = self.bottom_area.move(-to_move_min_x, -to_move_min_y)
             
             # Canvas 크기 계산 
-            total_h = int(round(total_area.h / self.resolution, 0)) + 1
-            total_w = int(round(total_area.w / self.resolution, 0)) + 1
+            total_h = int(round(total_area.h / self.__resolution, 0)) + 1
+            total_w = int(round(total_area.w / self.__resolution, 0)) + 1
             
             # Canvas 생성
             total_img = np.ones((2, total_h, total_w)) * 255
@@ -762,7 +856,7 @@ class Component:
     
     @property
     def bounding_box(self):
-        return self.min_x, self.max_x, self.min_y, self.max_y
+        return self.min_x, self.min_y, self.max_x, self.max_y
     
     def get_cv_img_center(self, size:tuple, resolution:float = 0.05, fill:bool=True) -> np.array:
         """
@@ -799,9 +893,14 @@ class Component:
         return top_img, bottom_img
 
     def rotation(self, angle, inplace=False):
+        """
+        - Desc -
+        Component를 angle만큼 회전
+        
+        """
         if inplace:
             # Attibutes 변경 
-            self.angle += angle
+            self.__angle += angle
             self.top_area.rotation(angle, self.center, inplace=True)
             self.bottom_area.rotation(angle, self.center, inplace=True)
             self.hole_area.rotation(angle, self.center, inplace=True)

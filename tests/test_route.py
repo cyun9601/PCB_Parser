@@ -22,11 +22,11 @@ pcb = PCB(data)
 
 # %%
 # Placement
-## 특정 Component와 연관이 있는 부품들의 목록을 추출  
+## 특정 Component와 연관이 있는 부품들의 목록을 추출
 center_component = 'CN485_ANGLE'
 connected_comp_list = pcb.get_connected_comps(center_component)
 
-## 해당 목록에 존재하지 않는 Comp들 제거 
+## 해당 목록에 존재하지 않는 Comp들 제거
 to_delete = set(pcb.components_dict.keys()) - set(connected_comp_list)
 
 for key in to_delete:
@@ -50,9 +50,10 @@ for comp_name in comp_list:
 # %% 
 # Routing 
 router = Router(pcb, resolution=0.005)
+for k, v in router.net.items():
+    router.routing(wire_name=k, wire_num=1000)
+
 comp = router.pcb.get_component(center_component)
 
 # 특정 Component의 Pin 위치를 가져옴 
 p = router.get_pin_position(comp_name, 1)
-
-a = 1
